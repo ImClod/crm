@@ -77,6 +77,13 @@ def create_new_lead(data):
     lead.website = data.get("website")
     lead.notes = data.get("notes")
     
+    # Check if the source exists, if not create it
+    if not frappe.db.exists("CRM Lead Source", "Wix Website"):
+        source_doc = frappe.new_doc("CRM Lead Source")
+        source_doc.source_name = "Wix Website"
+        source_doc.insert(ignore_permissions=True)
+        frappe.db.commit()
+    
     # Set source and status
     lead.source = "Wix Website"
     lead.status = "New"
