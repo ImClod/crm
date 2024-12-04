@@ -2,11 +2,12 @@ import frappe
 import json
 from frappe import _
 from frappe.utils import validate_email_address
+from crm.fcrm.doctype.crm_lead.crm_lead import convert_to_deal
 
 @frappe.whitelist(allow_guest=True)
 def create_lead_from_wix():
     """
-    Create a new lead from Wix form submission.
+    Create a new lead from Wix form submission and convert it to a deal.
     Expected POST data format:
     {
         "first_name": "John",
@@ -15,12 +16,12 @@ def create_lead_from_wix():
         "mobile_no": "+1234567890",
         "organization": "Company Name",
         "website": "www.example.com",
-        "notes": "Additional information",
-        "create_deal": true,
-        "deal_value": 1000
+        "notes": "Additional information"
     }
     """
     try:
+        frappe.set_user("Administrator")  # Set admin privileges for all operations
+        
         # Get JSON data from request
         data = json.loads(frappe.request.data)
         validate_lead_data(data)
@@ -28,21 +29,19 @@ def create_lead_from_wix():
         # Create lead
         lead = create_new_lead(data)
         
-        # Create deal if requested
-        deal = None
-        if data.get("create_deal"):
-            deal = create_deal_from_lead(lead, data)
+        # Convert lead to deal using the CRM's built-in conversion function
+        lead_doc = frappe.get_doc("CRM Lead", lead.name)
+        lead_doc.flags.ignore_permissions = True
+        deal = convert_to_deal(lead=lead_doc.name, doc=lead_doc)
         
         response = {
             "status": "success",
-            "message": _("Lead created successfully"),
+            "message": _("Lead created and converted to deal successfully"),
             "data": {
-                "lead_id": lead.name
+                "lead_id": lead_doc.name,
+                "deal_id": deal
             }
         }
-        
-        if deal:
-            response["data"]["deal_id"] = deal.name
             
         return response
         
@@ -89,65 +88,8 @@ def create_new_lead(data):
     lead.status = "New"
     
     # Save the lead
-    lead.insert(ignore_permissions=True)
+    lead.flags.ignore_permissions = True
+    lead.insert()
     frappe.db.commit()
     
     return lead
-
-def create_organization(organization_name):
-    """Create a new organization if it doesn't exist"""
-    if not organization_name:
-        return None
-        
-    if not frappe.db.exists("CRM Organization", {"organization_name": organization_name}):
-        org = frappe.new_doc("CRM Organization")
-        org.organization_name = organization_name
-        org.insert(ignore_permissions=True)
-        frappe.db.commit()
-        return org.name
-    else:
-        return frappe.get_value("CRM Organization", {"organization_name": organization_name}, "name")
-
-def create_deal_from_lead(lead, data):
-    """Create a deal associated with the lead"""
-    try:
-        # First, ensure organization exists
-        organization_name = None
-        if lead.organization:
-            organization_name = create_organization(lead.organization)
-        
-        # Create a new deal
-        deal = frappe.new_doc("CRM Deal")
-        
-        # Map lead information to deal
-        if organization_name:
-            deal.organization = organization_name
-            
-        # Set contact information
-        deal.first_name = lead.first_name
-        deal.last_name = lead.last_name
-        deal.email = lead.email
-        deal.mobile_no = lead.mobile_no
-        
-        # Set deal specific information
-        deal.status = "Qualification"  # Default status for new deals
-        deal.deal_owner = frappe.session.user
-        deal.source = "Wix Website"
-        
-        # Set deal value if provided
-        if data.get("deal_value"):
-            deal.deal_value = float(data.get("deal_value"))
-        
-        # Save the deal with ignore permissions
-        deal.flags.ignore_permissions = True
-        deal.insert()
-        
-        # Commit the transaction
-        frappe.db.commit()
-        
-        return deal
-        
-    except Exception as e:
-        error_msg = f"Deal Creation Error: {str(e)}"
-        frappe.log_error(error_msg, "Wix Integration")
-        raise frappe.ValidationError(error_msg)
