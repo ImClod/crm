@@ -97,25 +97,44 @@ def create_new_lead(data):
 def create_deal_from_lead(lead, data):
     """Create a deal associated with the lead"""
     try:
+        # Create a new deal
         deal = frappe.new_doc("CRM Deal")
         
         # Map lead information to deal
-        deal.contact = lead.name
         deal.organization = lead.organization
+        deal.contact = lead.name  # This maps to the lead
         deal.email = lead.email
         deal.mobile_no = lead.mobile_no
+        deal.first_name = lead.first_name
+        deal.last_name = lead.last_name
         
         # Set deal specific information
-        deal.status = "Qualification"
+        deal.status = "Qualification"  # Default status for new deals
+        deal.deal_owner = frappe.session.user
+        
+        # Set deal value if provided
         if data.get("deal_value"):
             deal.deal_value = float(data.get("deal_value"))
-            
-        # Save the deal
-        deal.insert(ignore_permissions=True)
+        
+        # Set additional fields
+        deal.source = "Wix Website"  # Match the lead source
+        
+        # Save the deal with ignore permissions
+        deal.flags.ignore_permissions = True
+        deal.insert()
+        
+        # Commit the transaction
         frappe.db.commit()
+        
+        # Log success
+        frappe.log_error(
+            f"Deal created successfully for Lead {lead.name}",
+            "Wix Integration Success"
+        )
         
         return deal
         
     except Exception as e:
-        frappe.log_error(f"Deal Creation Error for Lead {lead.name}: {str(e)}", "Wix Integration Error")
-        raise
+        error_msg = f"Deal Creation Error for Lead {lead.name}: {str(e)}"
+        frappe.log_error(error_msg, "Wix Integration Error")
+        raise frappe.ValidationError(error_msg)
