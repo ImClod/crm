@@ -1,36 +1,13 @@
 import frappe
 import json
-import logging
 from frappe import _
 from frappe.utils import validate_email_address
 from crm.fcrm.doctype.crm_lead.crm_lead import convert_to_deal
-
-# Set up logging
-logger = logging.getLogger('wix_integration')
-logger.setLevel(logging.INFO)
-handler = logging.StreamHandler()
-formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-file_handler = logging.FileHandler(frappe.utils.get_site_path('logs', 'wix_integration.log'))
-file_handler.setFormatter(formatter)
-logger.addHandler(file_handler)
-
-handler.setFormatter(formatter)
-logger.addHandler(handler)
 
 @frappe.whitelist(allow_guest=True)
 def create_lead_from_wix():
     """
     Create a new lead from Wix form submission and convert it to a deal.
-    Expected POST data format:
-    {
-        "first_name": "John",
-        "last_name": "Doe",
-        "email": "john@example.com",
-        "mobile_no": "+1234567890",
-        "organization": "Company Name",
-        "website": "www.example.com",
-        "notes": "Additional information"
-    }
     """
     try:
         frappe.set_user("Administrator")  # Set admin privileges for all operations
@@ -39,7 +16,7 @@ def create_lead_from_wix():
         data = json.loads(frappe.request.data)
         
         # Log the incoming request data
-        logger.info(f"Received Wix form submission data: {json.dumps(data, indent=2)}")
+        frappe.log_error(title="Wix Form Submission Data", message=json.dumps(data, indent=2))
         
         validate_lead_data(data)
         
@@ -52,7 +29,7 @@ def create_lead_from_wix():
         deal = convert_to_deal(lead=lead_doc.name, doc=lead_doc)
         
         # Log successful creation
-        logger.info(f"Successfully created lead {lead.name} and converted to deal {deal}")
+        frappe.log_error(title="Lead and Deal Created", message=f"Successfully created lead {lead.name} and converted to deal {deal}")
         
         response = {
             "status": "success",
@@ -62,13 +39,12 @@ def create_lead_from_wix():
                 "deal_id": deal
             }
         }
-            
+                
         return response
-        
+            
     except Exception as e:
         error_msg = f"Wix Lead Creation Error: {str(e)}"
-        logger.error(error_msg)
-        frappe.log_error(error_msg, "Wix Integration")
+        frappe.log_error(title="Wix Integration Error", message=error_msg)
         return {
             "status": "error",
             "message": str(e)
@@ -78,7 +54,7 @@ def validate_lead_data(data):
     """Validate the incoming lead data"""
     # Allow creation even if some fields are missing
     if not (data.get("email") or data.get("mobile_no")):
-        frappe.throw(_("At least one of email, mobile number."))
+        frappe.throw(_("At least one of email or mobile number is required."))
 
     if data.get("email") and not validate_email_address(data.get("email")):
         frappe.throw(_("Invalid email address"))
@@ -100,7 +76,7 @@ def create_new_lead(data):
     organization_name = data.get("organization")
     if not organization_name or organization_name.strip() == "":
         organization_name = f"{lead.first_name} {lead.last_name}"
-    lead.organization = organization_name
+    lead.organization = organization_name.strip()
     
     lead.website = data.get("website")
     lead.notes = data.get("notes")
