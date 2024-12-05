@@ -53,7 +53,7 @@ def create_lead_from_wix():
         }
 
 def validate_lead_data(data):
-    frappe.log_error(f"Wix Lead Creation Error: {data}", "Wix Integration")
+    frappe.throw(_(f"Wix Lead Creation Error: {data}"))
     """Validate the incoming lead data"""
     # Allow creation even if some fields are missing
     if not (data.get("email") or data.get("mobile_no")):
