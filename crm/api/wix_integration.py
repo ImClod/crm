@@ -54,14 +54,15 @@ def create_lead_from_wix():
 
 def validate_lead_data(data):
     """Validate the incoming lead data"""
-    if not data.get("email"):
-        frappe.throw(_("Email is required"))
-        
-    if not validate_email_address(data.get("email")):
+    # Allow creation even if some fields are missing
+    if not (data.get("email") or data.get("mobile_no")):
+        frappe.throw(_("At least one of email, mobile number."))
+
+    if data.get("email") and not validate_email_address(data.get("email")):
         frappe.throw(_("Invalid email address"))
         
-    if not data.get("first_name"):
-        frappe.throw(_("First name is required"))
+    if not data.get("first_name") and not data.get("last_name"):
+        frappe.throw(_("At least first name or last name is required"))
 
 def create_new_lead(data):
     """Create a new lead from the validated data"""
@@ -72,7 +73,13 @@ def create_new_lead(data):
     lead.last_name = data.get("last_name")
     lead.email = data.get("email")
     lead.mobile_no = data.get("mobile_no")
-    lead.organization = data.get("organization")
+    
+    # Check organization name and set it
+    organization_name = data.get("organization")
+    if not organization_name or organization_name.strip() == "":
+        organization_name = f"{lead.first_name} {lead.last_name}"
+    lead.organization = organization_name
+    
     lead.website = data.get("website")
     lead.notes = data.get("notes")
     
