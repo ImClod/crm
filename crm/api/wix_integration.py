@@ -13,10 +13,16 @@ def create_lead_from_wix():
         frappe.set_user("Administrator")  # Set admin privileges for all operations
         
         # Get JSON data from request
-        data = json.loads(frappe.request.data)
-        data = data.data
+        raw_data = json.loads(frappe.request.data)
+        
+        # Extract the actual data from the "data" key
+        data = raw_data.get("data", {})
+        
         # Log the incoming request data
         frappe.log_error(title="Wix Form Submission Data", message=json.dumps(data, indent=2))
+        
+        # Normalize data: Strip spaces from all string values
+        data = {key: value.strip() if isinstance(value, str) else value for key, value in data.items()}
         
         validate_lead_data(data)
         
@@ -73,9 +79,7 @@ def create_new_lead(data):
     lead.mobile_no = data.get("mobile_no")
     
     # Check organization name and set it
-    organization_name = data.get("organization")
-    if not organization_name or organization_name.strip() == "":
-        organization_name = f"{lead.first_name} {lead.last_name}"
+    organization_name = data.get("organization") or f"{lead.first_name} {lead.last_name}"
     lead.organization = organization_name.strip()
     
     lead.website = data.get("website")
