@@ -13,7 +13,7 @@ def create_lead_from_wix():
         frappe.set_user("Administrator")  # Set admin privileges for all operations
         
         # Get JSON data from request
-        data = json.loads(frappe.request.data)
+        data = json.loads(frappe.request.data.data)
         
         # Log the incoming request data
         frappe.log_error(title="Wix Form Submission Data", message=json.dumps(data, indent=2))
