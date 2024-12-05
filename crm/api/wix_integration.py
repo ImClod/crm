@@ -10,7 +10,7 @@ logger = logging.getLogger('wix_integration')
 logger.setLevel(logging.INFO)
 handler = logging.StreamHandler()
 formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-file_handler = logging.FileHandler('/logs/wix_integration.log')
+file_handler = logging.FileHandler(frappe.utils.get_site_path('logs', 'wix_integration.log'))
 file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
 
