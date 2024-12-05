@@ -24,6 +24,10 @@ def create_lead_from_wix():
         # Normalize data: Strip spaces from all string values
         data = {key: value.strip() if isinstance(value, str) else value for key, value in data.items()}
         
+        # Normalize the phone number (remove dashes)
+        if "mobile_no" in data:
+            data["mobile_no"] = normalize_phone_number(data["mobile_no"])
+        
         validate_lead_data(data)
         
         # Create lead
@@ -32,17 +36,21 @@ def create_lead_from_wix():
         # Convert lead to deal using the CRM's built-in conversion function
         lead_doc = frappe.get_doc("CRM Lead", lead.name)
         lead_doc.flags.ignore_permissions = True
-        deal = convert_to_deal(lead=lead_doc.name, doc=lead_doc)
+        deal_name = convert_to_deal(lead=lead_doc.name, doc=lead_doc)
+        
+        # If notes are provided, create a note linked to the deal
+        if data.get("notes"):
+            create_fcrm_note(deal_name, data.get('title'), data.get("notes"))
         
         # Log successful creation
-        frappe.log_error(title="Lead and Deal Created", message=f"Successfully created lead {lead.name} and converted to deal {deal}")
+        frappe.log_error(title="Lead and Deal Created", message=f"Successfully created lead {lead.name} and converted to deal {deal_name}")
         
         response = {
             "status": "success",
             "message": _("Lead created and converted to deal successfully"),
             "data": {
                 "lead_id": lead_doc.name,
-                "deal_id": deal
+                "deal_id": deal_name
             }
         }
                 
@@ -102,3 +110,22 @@ def create_new_lead(data):
     frappe.db.commit()
     
     return lead
+
+def create_fcrm_note(reference_name, title, content):
+    """Create a new FCRM Note linked to the Deal"""
+    try:
+        note = frappe.new_doc("FCRM Note")
+        note.title = title
+        note.content = content
+        note.reference_docname = reference_name
+        note.reference_doctype = "CRM Deal"
+        note.owner = frappe.session.user
+        note.flags.ignore_permissions = True
+        note.insert()
+        frappe.db.commit()
+    except Exception as e:
+        frappe.log_error(title="Error Creating FCRM Note", message=str(e))
+
+def normalize_phone_number(phone_number):
+    """Remove dashes from the phone number"""
+    return phone_number.replace("-", "").strip()
