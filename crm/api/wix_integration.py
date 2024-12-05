@@ -1,8 +1,21 @@
 import frappe
 import json
+import logging
 from frappe import _
 from frappe.utils import validate_email_address
 from crm.fcrm.doctype.crm_lead.crm_lead import convert_to_deal
+
+# Set up logging
+logger = logging.getLogger('wix_integration')
+logger.setLevel(logging.INFO)
+handler = logging.StreamHandler()
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+file_handler = logging.FileHandler('/logs/wix_integration.log')
+file_handler.setFormatter(formatter)
+logger.addHandler(file_handler)
+
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 
 @frappe.whitelist(allow_guest=True)
 def create_lead_from_wix():
@@ -24,6 +37,10 @@ def create_lead_from_wix():
         
         # Get JSON data from request
         data = json.loads(frappe.request.data)
+        
+        # Log the incoming request data
+        logger.info(f"Received Wix form submission data: {json.dumps(data, indent=2)}")
+        
         validate_lead_data(data)
         
         # Create lead
@@ -33,6 +50,9 @@ def create_lead_from_wix():
         lead_doc = frappe.get_doc("CRM Lead", lead.name)
         lead_doc.flags.ignore_permissions = True
         deal = convert_to_deal(lead=lead_doc.name, doc=lead_doc)
+        
+        # Log successful creation
+        logger.info(f"Successfully created lead {lead.name} and converted to deal {deal}")
         
         response = {
             "status": "success",
@@ -46,14 +66,15 @@ def create_lead_from_wix():
         return response
         
     except Exception as e:
-        frappe.log_error(f"Wix Lead Creation Error: {str(e)}", "Wix Integration")
+        error_msg = f"Wix Lead Creation Error: {str(e)}"
+        logger.error(error_msg)
+        frappe.log_error(error_msg, "Wix Integration")
         return {
             "status": "error",
             "message": str(e)
         }
 
 def validate_lead_data(data):
-    frappe.throw(_(data))
     """Validate the incoming lead data"""
     # Allow creation even if some fields are missing
     if not (data.get("email") or data.get("mobile_no")):
