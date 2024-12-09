@@ -8,146 +8,122 @@
         </template>
         <template #right-header>
           <div class="flex items-center gap-2">
-            <ViewControls 
-              :doctype="doctype"
-              :filters="filters"
+            <DateRangePicker 
+              v-model="filters.date_range.value"
+              @change="updateDateFilter"
             />
           </div>
         </template>
       </LayoutHeader>
   
-      <ListView
-        :columns="columns"
-        :rows="rows"
-        :options="{
-          getRowRoute: (row) => ({
-            name: 'Contact',
-            params: { name: row.name }
-          }),
-          selectable: false
-        }"
-      >
-        <ListHeader class="sm:mx-5 mx-3">
-          <ListHeaderItem
-            v-for="column in columns"
-            :key="column.key"
-            :item="column"
-          />
-        </ListHeader>
-        
-        <ListRows :rows="rows" v-slot="{ column, item, row }">
-          <ListRowItem :item="item">
-            <template #default="{ label }">
-              <div 
-                v-if="column.key === 'actions'" 
-                class="flex items-center space-x-2"
-              >
-                <Tooltip :text="__('Mark Call Completed')">
-                  <Button 
-                    variant="solid" 
-                    class="bg-green-500 hover:bg-green-600"
-                    @click="markCallStatus(row, 'Completed')"
-                  >
-                    <CheckIcon class="w-4 h-4" />
-                  </Button>
-                </Tooltip>
-                <Tooltip :text="__('Mark Call Rejected')">
-                  <Button 
-                    variant="solid" 
-                    class="bg-red-500 hover:bg-red-600"
-                    @click="markCallStatus(row, 'Rejected')"
-                  >
-                    <DeclinedCallIcon class="w-4 h-4" />
-                  </Button>
-                </Tooltip>
-              </div>
-              <div v-else>{{ label }}</div>
-            </template>
-          </ListRowItem>
-        </ListRows>
-      </ListView>
+      <div v-if="scheduledCallsResource.loading" class="flex justify-center items-center h-64">
+        <LoadingIndicator />
+      </div>
+  
+      <div v-else-if="rows.length === 0" class="flex justify-center items-center h-64 text-gray-500">
+        {{ __('No scheduled calls for today') }}
+      </div>
+  
+      <div v-else class="overflow-x-auto">
+        <Table>
+          <template #header>
+            <TableRow>
+              <TableHeaderCell>{{ __('Name') }}</TableHeaderCell>
+              <TableHeaderCell>{{ __('Email') }}</TableHeaderCell>
+              <TableHeaderCell>{{ __('Mobile') }}</TableHeaderCell>
+              <TableHeaderCell>{{ __('First Call Date') }}</TableHeaderCell>
+              <TableHeaderCell>{{ __('Actions') }}</TableHeaderCell>
+            </TableRow>
+          </template>
+          <template #body>
+            <TableRow v-for="row in rows" :key="row.name">
+              <TableCell>{{ row.full_name }}</TableCell>
+              <TableCell>{{ row.email }}</TableCell>
+              <TableCell>{{ row.mobile_no }}</TableCell>
+              <TableCell>{{ row.custom_first_date }}</TableCell>
+              <TableCell>
+                <div class="flex items-center space-x-2">
+                  <Tooltip :text="__('Mark Call Completed')">
+                    <Button 
+                      variant="solid" 
+                      class="bg-green-500 hover:bg-green-600"
+                      @click="markCallStatus(row, 'Completed')"
+                    >
+                      <CheckIcon class="w-4 h-4" />
+                    </Button>
+                  </Tooltip>
+                  <Tooltip :text="__('Mark Call Rejected')">
+                    <Button 
+                      variant="solid" 
+                      class="bg-red-500 hover:bg-red-600"
+                      @click="markCallStatus(row, 'Rejected')"
+                    >
+                      <DeclinedCallIcon class="w-4 h-4" />
+                    </Button>
+                  </Tooltip>
+                </div>
+              </TableCell>
+            </TableRow>
+          </template>
+        </Table>
+      </div>
     </div>
   </template>
   
   <script setup>
-  import { ref, computed, onMounted } from 'vue'
+  import { ref, computed, onMounted, onUnmounted } from 'vue'
   import { 
     createResource, 
     Tooltip, 
-    Button 
+    Button, 
+    Table, 
+    TableRow, 
+    TableHeaderCell, 
+    TableCell,
+    LoadingIndicator,
+    DateRangePicker
   } from 'frappe-ui'
-  import { useRouter } from 'vue-router'
   import CheckIcon from '@/components/Icons/CheckIcon.vue'
   import DeclinedCallIcon from '@/components/Icons/DeclinedCallIcon.vue'
-  import ViewControls from '@/components/ViewControls.vue'
-  import ListView from '@/components/ListView.vue'
-  import ListHeader from '@/components/ListHeader.vue'
-  import ListHeaderItem from '@/components/ListHeaderItem.vue'
-  import ListRows from '@/components/ListRows.vue'
-  import ListRowItem from '@/components/ListRowItem.vue'
   
-  const doctype = 'Contact'
-  const router = useRouter()
-  
-  // Definisci le colonne
-  const columns = [
-    { 
-      label: 'Name', 
-      key: 'full_name', 
-      type: 'Data', 
-      width: '20rem' 
-    },
-    { 
-      label: 'Email', 
-      key: 'email', 
-      type: 'Data', 
-      width: '15rem' 
-    },
-    { 
-      label: 'Mobile', 
-      key: 'mobile_no', 
-      type: 'Data', 
-      width: '12rem' 
-    },
-    { 
-      label: 'Actions', 
-      key: 'actions', 
-      type: 'Data', 
-      width: '10rem' 
-    }
-  ]
-  
-  // Risorse API
-  const list = ref(createResource({
-    url: 'crm.api.doc.get_data',
+  const scheduledCallsResource = createResource({
+    url: 'crm.api.contact.get_scheduled_calls',
+    method: 'GET',
     params: {
-      doctype: doctype,
-      filters: {},
-      order_by: 'modified desc'
+      today_only: true
     },
     cache: ['Scheduled Calls'],
     auto: true
-  }))
-  
-  const rows = computed(() => {
-    return list.value.data?.data || []
   })
   
-  const filters = ref({})
+  const rows = computed(() => {
+    return scheduledCallsResource.data || []
+  })
+  
+  const filters = ref({
+    date_range: {
+      label: 'Date Range',
+      type: 'Date',
+      value: 'today'
+    }
+  })
+  
+  const updateDateFilter = () => {
+    scheduledCallsResource.params.today_only = filters.value.date_range.value === 'today'
+    scheduledCallsResource.reload()
+  }
   
   const markCallStatusResource = createResource({
     url: 'crm.api.contact.mark_call_status',
     method: 'POST',
     onSuccess: (response) => {
-      // Ricarica la lista dopo aver segnato la chiamata
-      list.value.reload()
+      scheduledCallsResource.reload()
     },
     onError: (error) => {
       console.error('Error marking call status:', error)
     }
   })
   
-  // Marca stato chiamata
   const markCallStatus = (row, status) => {
     markCallStatusResource.submit({
       contact: row.name,
@@ -155,18 +131,15 @@
     })
   }
   
-  // Gestore evento real-time
-  const handleRealtimeUpdate = (data) => {
-    list.value.reload()
+  const handleRealtimeUpdate = () => {
+    scheduledCallsResource.reload()
   }
   
   onMounted(() => {
-    // Registra listener per aggiornamenti real-time
     frappe.realtime.on('scheduled_call_updated', handleRealtimeUpdate)
   })
   
   onUnmounted(() => {
-    // Rimuovi listener
     frappe.realtime.off('scheduled_call_updated', handleRealtimeUpdate)
   })
   </script>
