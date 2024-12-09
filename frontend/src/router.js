@@ -88,7 +88,7 @@ const routes = [
     alias: '/scheduled-calls',
     path: '/scheduled-calls',
     name: 'Scheduled Calls',
-    component: () => import('pages/ScheduledCalls.vue'),
+    component: () => import('@/pages/ScheduledCalls.vue'),
   },
   {
     alias: '/email-templates',
