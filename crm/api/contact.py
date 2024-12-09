@@ -44,13 +44,12 @@ def update_deals_email_mobile_no(doc):
 @frappe.whitelist()
 def get_scheduled_calls():
     """Fetch contacts with today's scheduled calls based on custom date fields."""
-    today = frappe.utils.nowdate()
     contacts = frappe.get_all(
         'Contact', 
         filters=[
-            ['custom_creation_date', '=', today],
-            ['custom_first_date', '=', today],
-            ['custom_second_date', '=', today]
+            ['custom_creation_date', 'is', 'set'],
+            ['custom_first_date', 'is', 'set'],
+            ['custom_second_date', 'is', 'set']
         ], 
         fields=[
             'name', 

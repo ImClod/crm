@@ -1,147 +1,166 @@
 <template>
-    <LayoutHeader>
-      <template #left-header>
-        <div class="flex items-center gap-2">
-          <h1 class="text-xl font-bold">{{ __('Today\'s Scheduled Calls') }}</h1>
-        </div>
-      </template>
-      <template #right-header>
-        <div class="flex items-center gap-2">
-          <!-- Barra di ricerca -->
-          <Input
-            type="text"
-            v-model="searchQuery"
-            :placeholder="__('Search contacts...')"
-            class="w-64"
-          />
-        </div>
-      </template>
-    </LayoutHeader>
+    <div>
+      <LayoutHeader>
+        <template #left-header>
+          <div class="flex items-center gap-2">
+            <h1 class="text-xl font-bold">{{ __('Scheduled Calls') }}</h1>
+          </div>
+        </template>
+        <template #right-header>
+          <div class="flex items-center gap-2">
+            <ViewControls 
+              :doctype="doctype"
+              :filters="filters"
+            />
+          </div>
+        </template>
+      </LayoutHeader>
   
-    <div class="p-4">
-      <!-- Stato di caricamento -->
-      <div v-if="loading" class="flex justify-center items-center h-full">
-        <Spinner />
-      </div>
-  
-      <!-- Lista vuota -->
-      <div 
-        v-else-if="filteredContacts.length === 0" 
-        class="flex flex-col items-center justify-center h-full text-gray-500"
+      <ListView
+        :columns="columns"
+        :rows="rows"
+        :options="{
+          getRowRoute: (row) => ({
+            name: 'Contact',
+            params: { name: row.name }
+          }),
+          selectable: false
+        }"
       >
-        <ContactsIcon class="h-16 w-16 mb-4" />
-        <p>{{ __('No scheduled calls for today') }}</p>
-      </div>
-  
-      <!-- Lista contatti -->
-      <div v-else class="space-y-4">
-        <div 
-          v-for="contact in filteredContacts" 
-          :key="contact.name"
-          class="bg-white border rounded-lg p-4 flex justify-between items-center shadow-sm"
-        >
-          <div class="flex-1">
-            <router-link 
-              :to="{ name: 'Contact', params: { name: contact.name } }"
-              class="text-lg font-semibold text-blue-600 hover:text-blue-800"
-            >
-              {{ contact.full_name }}
-            </router-link>
-            <div class="text-sm text-gray-600 mt-1">
-              <div>{{ contact.email }}</div>
-              <div>{{ contact.mobile_no }}</div>
-            </div>
-          </div>
-  
-          <div class="flex space-x-2">
-            <Tooltip :text="__('Mark Call Completed')">
-              <Button 
-                variant="solid" 
-                class="bg-green-500 hover:bg-green-600"
-                @click="markCallStatus(contact, 'Completed')"
+        <ListHeader class="sm:mx-5 mx-3">
+          <ListHeaderItem
+            v-for="column in columns"
+            :key="column.key"
+            :item="column"
+          />
+        </ListHeader>
+        
+        <ListRows :rows="rows" v-slot="{ column, item, row }">
+          <ListRowItem :item="item">
+            <template #default="{ label }">
+              <div 
+                v-if="column.key === 'actions'" 
+                class="flex items-center space-x-2"
               >
-                <CheckIcon class="w-5 h-5" />
-              </Button>
-            </Tooltip>
-  
-            <Tooltip :text="__('Mark Call Rejected')">
-              <Button 
-                variant="solid" 
-                class="bg-red-500 hover:bg-red-600"
-                @click="markCallStatus(contact, 'Rejected')"
-              >
-                <DeclinedCallIcon class="w-5 h-5" />
-              </Button>
-            </Tooltip>
-          </div>
-        </div>
-      </div>
+                <Tooltip :text="__('Mark Call Completed')">
+                  <Button 
+                    variant="solid" 
+                    class="bg-green-500 hover:bg-green-600"
+                    @click="markCallStatus(row, 'Completed')"
+                  >
+                    <CheckIcon class="w-4 h-4" />
+                  </Button>
+                </Tooltip>
+                <Tooltip :text="__('Mark Call Rejected')">
+                  <Button 
+                    variant="solid" 
+                    class="bg-red-500 hover:bg-red-600"
+                    @click="markCallStatus(row, 'Rejected')"
+                  >
+                    <DeclinedCallIcon class="w-4 h-4" />
+                  </Button>
+                </Tooltip>
+              </div>
+              <div v-else>{{ label }}</div>
+            </template>
+          </ListRowItem>
+        </ListRows>
+      </ListView>
     </div>
   </template>
   
   <script setup>
-  import { ref, computed, onMounted, onUnmounted } from 'vue'
-  import { createResource, Tooltip, Button } from 'frappe-ui'
+  import { ref, computed, onMounted } from 'vue'
+  import { 
+    createResource, 
+    Tooltip, 
+    Button 
+  } from 'frappe-ui'
   import { useRouter } from 'vue-router'
-  import ContactsIcon from '@/components/Icons/ContactsIcon.vue'
   import CheckIcon from '@/components/Icons/CheckIcon.vue'
   import DeclinedCallIcon from '@/components/Icons/DeclinedCallIcon.vue'
+  import ViewControls from '@/components/ViewControls.vue'
+  import ListView from '@/components/ListView.vue'
+  import ListHeader from '@/components/ListHeader.vue'
+  import ListHeaderItem from '@/components/ListHeaderItem.vue'
+  import ListRows from '@/components/ListRows.vue'
+  import ListRowItem from '@/components/ListRowItem.vue'
   
+  const doctype = 'Contact'
   const router = useRouter()
-  const loading = ref(true)
-  const contacts = ref([])
-  const searchQuery = ref('')
+  
+  // Definisci le colonne
+  const columns = [
+    { 
+      label: 'Name', 
+      key: 'full_name', 
+      type: 'Data', 
+      width: '20rem' 
+    },
+    { 
+      label: 'Email', 
+      key: 'email', 
+      type: 'Data', 
+      width: '15rem' 
+    },
+    { 
+      label: 'Mobile', 
+      key: 'mobile_no', 
+      type: 'Data', 
+      width: '12rem' 
+    },
+    { 
+      label: 'Actions', 
+      key: 'actions', 
+      type: 'Data', 
+      width: '10rem' 
+    }
+  ]
   
   // Risorse API
-  const scheduledCalls = createResource({
-    url: 'crm.api.contact.get_scheduled_calls',
-    onSuccess: (data) => {
-      contacts.value = data
-      loading.value = false
+  const list = ref(createResource({
+    url: 'crm.api.doc.get_data',
+    params: {
+      doctype: doctype,
+      filters: {},
+      order_by: 'modified desc'
     },
-    onError: (error) => {
-      console.error('Error fetching scheduled calls:', error)
-      loading.value = false
-    }
+    cache: ['Scheduled Calls'],
+    auto: true
+  }))
+  
+  const rows = computed(() => {
+    return list.value.data?.data || []
   })
+  
+  const filters = ref({})
   
   const markCallStatusResource = createResource({
     url: 'crm.api.contact.mark_call_status',
     method: 'POST',
     onSuccess: (response) => {
-      // La rimozione del contatto avverrà tramite evento realtime
+      // Ricarica la lista dopo aver segnato la chiamata
+      list.value.reload()
     },
     onError: (error) => {
       console.error('Error marking call status:', error)
     }
   })
   
-  // Filtro contatti
-  const filteredContacts = computed(() => {
-    return contacts.value.filter(contact => 
-      !searchQuery.value || 
-      contact.full_name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      contact.email.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      contact.mobile_no.includes(searchQuery.value)
-    )
-  })
-  
   // Marca stato chiamata
-  const markCallStatus = (contact, status) => {
+  const markCallStatus = (row, status) => {
     markCallStatusResource.submit({
-      contact: contact.name,
+      contact: row.name,
       status: status
     })
   }
   
   // Gestore evento real-time
   const handleRealtimeUpdate = (data) => {
-    contacts.value = contacts.value.filter(c => c.name !== data.contact)
+    list.value.reload()
   }
   
   onMounted(() => {
-    scheduledCalls.fetch()
-    
     // Registra listener per aggiornamenti real-time
     frappe.realtime.on('scheduled_call_updated', handleRealtimeUpdate)
   })
