@@ -46,55 +46,71 @@ def get_scheduled_calls():
     """
     Retrieve scheduled calls for today that haven't been called yet
     """
-    from frappe.utils import nowdate, add_to_date
+    from frappe.utils import nowdate, getdate
 
-    today = nowdate()
-    start_of_today = today + " 00:00:00"
-    end_of_today = today + " 23:59:59"
+    # Ottieni la data di oggi
+    today = getdate(nowdate())
 
-    # Trova i contatti con date corrispondenti a oggi
-    scheduled_contacts = frappe.get_list('CRM Contact', 
-        filters=[
-            'OR',
-            {'custom_creation_date': ['between', [start_of_today, end_of_today]]},
-            {'custom_first_date': ['between', [start_of_today, end_of_today]]},
-            {'custom_second_date': ['between', [start_of_today, end_of_today]]}
-        ],
-        fields=[
-            'name', 
-            'first_name', 
-            'last_name', 
-            'email', 
-            'mobile_no', 
-            'custom_creation_date',
-            'custom_first_date', 
-            'custom_second_date'
-        ]
+    # Query per trovare i contatti
+    query = """
+    SELECT 
+        name, 
+        first_name, 
+        last_name, 
+        email, 
+        mobile_no, 
+        custom_creation_date,
+        custom_first_date, 
+        custom_second_date
+    FROM `tabCRM Contact`
+    WHERE 
+        (
+            custom_creation_date = %s OR
+            custom_first_date = %s OR
+            custom_second_date = %s
+        )
+    """
+
+    contacts = frappe.db.sql(
+        query, 
+        [today, today, today], 
+        as_dict=True
     )
 
-    # Filtra i contatti che non hanno già una chiamata oggi
+    # Filtra i contatti che non hanno chiamate oggi
     formatted_calls = []
-    for contact in scheduled_contacts:
+    for contact in contacts:
         # Verifica se esiste già un call log per questo contatto oggi
-        existing_call_log = frappe.db.exists('CRM Call Log', {
-            'reference_doctype': 'Contact',
-            'reference_docname': contact['name'],
-            'creation': ['between', [start_of_today, end_of_today]]
-        })
+        existing_call_log_query = """
+        SELECT COUNT(*) as call_count
+        FROM `tabCRM Call Log`
+        WHERE 
+            reference_doctype = 'Contact' AND 
+            reference_docname = %s AND 
+            DATE(creation) = %s
+        """
 
-        # Se non esiste un call log, aggiungi il contatto alle chiamate pianificate
-        if not existing_call_log:
+        call_log_count = frappe.db.sql(
+            existing_call_log_query, 
+            [contact['name'], today], 
+            as_dict=True
+        )[0]['call_count']
+
+        # Se non esistono call log, aggiungi alle chiamate pianificate
+        if call_log_count == 0:
+            # Scegli la prima data disponibile
+            scheduled_date = (
+                contact.get('custom_first_date') or 
+                contact.get('custom_creation_date') or 
+                contact.get('custom_second_date')
+            )
+
             formatted_calls.append({
                 'name': contact.get('name'),
                 'full_name': f"{contact.get('first_name', '')} {contact.get('last_name', '')}".strip(),
                 'email': contact.get('email'),
                 'mobile_no': contact.get('mobile_no'),
-                'custom_first_date': frappe.utils.format_datetime(
-                    contact.get('custom_first_date') or 
-                    contact.get('custom_creation_date') or 
-                    contact.get('custom_second_date'), 
-                    'medium'
-                )
+                'custom_first_date': frappe.utils.format_date(scheduled_date)
             })
 
     return formatted_calls
