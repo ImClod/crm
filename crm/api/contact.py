@@ -43,26 +43,44 @@ def update_deals_email_mobile_no(doc):
 
 @frappe.whitelist()
 def get_scheduled_calls():
-    """Fetch contacts with today's scheduled calls based on custom date fields."""
-    contacts = frappe.get_all(
-        'Contact', 
+    """
+    Retrieve scheduled calls for today
+    """
+    from frappe.utils import nowdate, add_to_date
+
+    today = nowdate()
+    start_of_today = today + " 00:00:00"
+    end_of_today = today + " 23:59:59"
+
+    scheduled_calls = frappe.get_list('CRM Contact', 
         filters=[
-            ['custom_creation_date', 'is', 'set'],
-            ['custom_first_date', 'is', 'set'],
-            ['custom_second_date', 'is', 'set']
-        ], 
+            {'custom_first_call_date': ['between', [start_of_today, end_of_today]]},
+            {'custom_call_status': 'Scheduled'}
+        ],
         fields=[
             'name', 
-            'full_name', 
-            'email_id as email', 
+            'first_name', 
+            'last_name', 
+            'email', 
             'mobile_no', 
-            'custom_creation_date',
-            'custom_first_date', 
-            'custom_second_date'
+            'custom_first_call_date', 
+            'custom_call_status'
         ]
     )
-    
-    return contacts
+
+    # Formattazione dei dati per il frontend
+    formatted_calls = []
+    for call in scheduled_calls:
+        formatted_calls.append({
+            'name': call.get('name'),
+            'full_name': f"{call.get('first_name', '')} {call.get('last_name', '')}".strip(),
+            'email': call.get('email'),
+            'mobile_no': call.get('mobile_no'),
+            'custom_first_date': frappe.utils.format_datetime(call.get('custom_first_call_date'), 'medium'),
+            'call_status': call.get('custom_call_status')
+        })
+
+    return formatted_calls
 
 @frappe.whitelist()
 def mark_call_status(contact, status):
@@ -70,7 +88,13 @@ def mark_call_status(contact, status):
     try:
         # Crea log chiamata
         call_log = frappe.new_doc('CRM Call Log')
+        
+        # Genera un ID univoco
+        import uuid
+        unique_id = str(uuid.uuid4())[:12]  # Usa UUID per generare ID univoco
+        
         call_log.update({
+            'id': unique_id,  # Aggiungi ID univoco
             'caller': frappe.session.user,
             'to': contact,
             'type': 'Outgoing',

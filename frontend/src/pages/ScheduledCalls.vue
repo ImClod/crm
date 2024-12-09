@@ -97,14 +97,11 @@
   import DeclinedCallIcon from '@/components/Icons/DeclinedCallIcon.vue'
   
   const scheduledCallsResource = createResource({
-    url: 'crm.api.contact.get_scheduled_calls',
-    method: 'GET',
-    params: {
-      today_only: true
-    },
-    cache: ['Scheduled Calls'],
-    auto: true
-  })
+  url: 'crm.api.contact.get_scheduled_calls',
+  method: 'GET',
+  cache: ['Scheduled Calls Today'],
+  auto: true
+})
   
   const rows = computed(() => {
     return scheduledCallsResource.data || []
