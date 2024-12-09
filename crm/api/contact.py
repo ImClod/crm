@@ -51,53 +51,41 @@ def get_scheduled_calls():
     # Ottieni la data di oggi
     today = getdate(nowdate())
 
-    # Query per trovare i contatti
-    query = """
-    SELECT 
-        name, 
-        first_name, 
-        last_name, 
-        email, 
-        mobile_no, 
-        custom_creation_date,
-        custom_first_date, 
-        custom_second_date
-    FROM `tabCRM Contact`
-    WHERE 
-        (
-            custom_creation_date = %s OR
-            custom_first_date = %s OR
-            custom_second_date = %s
-        )
-    """
-
-    contacts = frappe.db.sql(
-        query, 
-        [today, today, today], 
-        as_dict=True
+    # Recupera i contatti utilizzando frappe.get_all()
+    contacts = frappe.get_all(
+        'CRM Contact',
+        filters=[
+            ['custom_creation_date', '=', today] | 
+            ['custom_first_date', '=', today] | 
+            ['custom_second_date', '=', today]
+        ],
+        fields=[
+            'name', 
+            'first_name', 
+            'last_name', 
+            'email', 
+            'mobile_no', 
+            'custom_creation_date',
+            'custom_first_date', 
+            'custom_second_date'
+        ]
     )
 
     # Filtra i contatti che non hanno chiamate oggi
     formatted_calls = []
     for contact in contacts:
         # Verifica se esiste già un call log per questo contatto oggi
-        existing_call_log_query = """
-        SELECT COUNT(*) as call_count
-        FROM `tabCRM Call Log`
-        WHERE 
-            reference_doctype = 'Contact' AND 
-            reference_docname = %s AND 
-            DATE(creation) = %s
-        """
-
-        call_log_count = frappe.db.sql(
-            existing_call_log_query, 
-            [contact['name'], today], 
-            as_dict=True
-        )[0]['call_count']
+        existing_call_logs = frappe.get_all(
+            'CRM Call Log',
+            filters={
+                'reference_doctype': 'Contact',
+                'reference_docname': contact['name'],
+                'creation': ['between', [today + ' 00:00:00', today + ' 23:59:59']]
+            }
+        )
 
         # Se non esistono call log, aggiungi alle chiamate pianificate
-        if call_log_count == 0:
+        if not existing_call_logs:
             # Scegli la prima data disponibile
             scheduled_date = (
                 contact.get('custom_first_date') or 
