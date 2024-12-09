@@ -85,6 +85,12 @@ const routes = [
     meta: { scrollPos: { top: 0, left: 0 } },
   },
   {
+    alias: '/scheduled-calls',
+    path: '/scheduled-calls',
+    name: 'Scheduled Calls',
+    component: () => import('pages/ScheduledCalls.vue'),
+  },
+  {
     alias: '/email-templates',
     path: '/email-templates/view/:viewType?',
     name: 'Email Templates',

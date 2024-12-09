@@ -61,6 +61,7 @@
           <nav class="flex flex-col">
             <SidebarLink
               v-for="link in view.views"
+              :key="link.label"
               :icon="link.icon"
               :label="__(link.label)"
               :to="link.to"
@@ -113,7 +114,7 @@ import {
   unreadNotificationsCount,
   notificationsStore,
 } from '@/stores/notifications'
-import { FeatherIcon } from 'frappe-ui'
+import { FeatherIcon, Badge } from 'frappe-ui'
 import { useStorage } from '@vueuse/core'
 import { computed, h } from 'vue'
 
@@ -157,6 +158,11 @@ const links = [
     label: 'Call Logs',
     icon: PhoneIcon,
     to: 'Call Logs',
+  },
+  {
+    label: 'Scheduled Calls',
+    icon: PhoneIcon,
+    to: 'Scheduled Calls',
   },
   {
     label: 'Email Templates',
@@ -221,6 +227,8 @@ function getIcon(routeName, icon) {
     case 'Notes':
       return NoteIcon
     case 'Call Logs':
+      return PhoneIcon
+    case 'Scheduled Calls':
       return PhoneIcon
     default:
       return PinIcon
