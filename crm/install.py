@@ -245,7 +245,7 @@ def add_contact_custom_fields():
 					"label": "Second Date",
 					"insert_after": "custom_first_date",
 					"read_only": 0
-				}
+				},
 			]
 		}
 	)
