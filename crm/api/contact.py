@@ -42,49 +42,67 @@ def update_deals_email_mobile_no(doc):
 
 
 @frappe.whitelist()
-@frappe.whitelist()
 def get_scheduled_calls():
     """Fetch contacts with today's scheduled calls based on custom date fields."""
     today = frappe.utils.nowdate()
-    contacts = frappe.get_all('Contact', filters=[
-        ['custom_creation_date', '=', today],
-        ['custom_first_date', '=', today],
-        ['custom_second_date', '=', today]
-    ], fields=['name', 'full_name', 'email', 'mobile_no'])
+    contacts = frappe.get_all(
+        'Contact', 
+        filters=[
+            ['custom_creation_date', '=', today],
+            ['custom_first_date', '=', today],
+            ['custom_second_date', '=', today]
+        ], 
+        fields=[
+            'name', 
+            'full_name', 
+            'email_id as email', 
+            'mobile_no', 
+            'custom_creation_date',
+            'custom_first_date', 
+            'custom_second_date'
+        ]
+    )
     
     return contacts
 
 @frappe.whitelist()
-def mark_call_completed(contact):
-    """Log a completed call for a contact."""
-    call_log = frappe.new_doc('CRM Call Log')
-    call_log.caller = frappe.session.user
-    call_log.to = contact
-    call_log.type = 'Outgoing'
-    call_log.status = 'Completed'
-    call_log.start_time = frappe.utils.now()
-    call_log.end_time = frappe.utils.now()
-    call_log.reference_doctype = 'Contact'
-    call_log.reference_docname = contact
-    call_log.insert()
-    frappe.db.commit()
-    return {'message': _('Call marked as completed for {0}').format(contact)}
-
-@frappe.whitelist()
-def mark_call_rejected(contact):
-    """Log a rejected call for a contact."""
-    call_log = frappe.new_doc('CRM Call Log')
-    call_log.caller = frappe.session.user
-    call_log.to = contact
-    call_log.type = 'Outgoing'
-    call_log.status = 'No Answer'
-    call_log.start_time = frappe.utils.now()
-    call_log.end_time = frappe.utils.now()
-    call_log.reference_doctype = 'Contact'
-    call_log.reference_docname = contact
-    call_log.insert()
-    frappe.db.commit()
-    return {'message': _('Call marked as rejected for {0}').format(contact)}
+def mark_call_status(contact, status):
+    """Log call status and create call log"""
+    try:
+        # Crea log chiamata
+        call_log = frappe.new_doc('CRM Call Log')
+        call_log.update({
+            'caller': frappe.session.user,
+            'to': contact,
+            'type': 'Outgoing',
+            'status': status,
+            'start_time': frappe.utils.now(),
+            'end_time': frappe.utils.now(),
+            'reference_doctype': 'Contact',
+            'reference_docname': contact
+        })
+        call_log.insert(ignore_permissions=True)
+        
+        # Pubblica evento in tempo reale per sincronizzazione
+        frappe.publish_realtime('scheduled_call_updated', {
+            'contact': contact,
+            'status': status
+        })
+        
+        frappe.db.commit()
+        
+        return {
+            'status': 'success', 
+            'message': f'Call marked as {status} for {contact}'
+        }
+    
+    except Exception as e:
+        frappe.log_error(f"Error marking call status: {str(e)}")
+        frappe.db.rollback()
+        return {
+            'status': 'error', 
+            'message': f'Failed to mark call: {str(e)}'
+        }
 @frappe.whitelist()
 def get_contact(name):
 	Contact = frappe.qb.DocType("Contact")
