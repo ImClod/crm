@@ -16,7 +16,6 @@ def after_install(force=False):
 	add_default_fields_layout(force)
 	add_property_setter()
 	add_email_template_custom_fields()
-	add_contact_custom_fields()
 	add_default_industries()
 	add_default_lead_sources()
 	frappe.db.commit()
