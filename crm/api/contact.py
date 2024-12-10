@@ -1,6 +1,6 @@
 import frappe
 from frappe import _
-
+from frappe.utils import nowdate, getdate  # type: ignore
 
 def validate(doc, method):
 	set_primary_email(doc)
@@ -46,56 +46,58 @@ def get_scheduled_calls():
     """
     Retrieve scheduled calls for today that haven't been called yet
     """
-    from frappe.utils import nowdate, getdate # type: ignore
 
     # Ottieni la data di oggi
     today = getdate(nowdate())
 
     # Recupera i contatti con date corrispondenti a oggi
     contacts = frappe.get_all(
-        'CRM Contact',
+        "CRM Contact",
         filters=[
-			['custom_creation_date', '=', today], 
-            ['custom_first_date', '=', today], 
-            ['custom_second_date', '=', today]
+            ["custom_first_date", "=", today],
+            ["custom_creation_date", "=", today],
+            ["custom_second_date", "=", today],
         ],
         fields=[
-            'name', 
-            'first_name', 
-            'last_name', 
-            'email', 
-            'mobile_no', 
-            'custom_creation_date',
-            'custom_first_date', 
-            'custom_second_date'
-        ]
+            "name",
+            "first_name",
+            "last_name",
+            "email",
+            "mobile_no",
+            "custom_creation_date",
+            "custom_first_date",
+            "custom_second_date",
+        ],
     )
 
     # Filtra i contatti che non hanno chiamate oggi
-    formatted_calls = []
+    scheduled_calls = []
     for contact in contacts:
         # Verifica se esiste già un call log per questo contatto oggi
         existing_call_logs = frappe.get_all(
-            'CRM Call Log',
+            "CRM Call Log",
             filters={
-                'reference_doctype': 'Contact',
-                'reference_docname': contact['name'],
-                'creation': ['between', [today + ' 00:00:00', today + ' 23:59:59']]
-            }
+                "reference_doctype": "Contact",
+                "reference_docname": contact["name"],
+                "creation": ["between", [today + " 00:00:00", today + " 23:59:59"]],
+            },
         )
 
         # Se non esistono call log, aggiungi alle chiamate pianificate
         if not existing_call_logs:
-            formatted_calls.append({
-                'name': contact.get('name'),
-                'full_name': f"{contact.get('first_name', '')} {contact.get('last_name', '')}".strip(),
-                'email': contact.get('email'),
-                'mobile_no': contact.get('mobile_no'),
-                'custom_first_date': frappe.utils.format_date(today)
-            })
+            scheduled_calls.append(
+                {
+                    "name": contact.get("name"),
+                    "full_name": f"{contact.get('first_name', '')} {contact.get('last_name', '')}".strip(),
+                    "email": contact.get("email"),
+                    "mobile_no": contact.get("mobile_no"),
+                    "custom_first_date": frappe.utils.format_date(contact.get("custom_first_date")),
+                    "custom_creation_date": frappe.utils.format_date(contact.get("custom_creation_date")),
+                    "custom_second_date": frappe.utils.format_date(contact.get("custom_second_date")),
+                }
+            )
 
-    return formatted_calls
-
+    return scheduled_calls
 @frappe.whitelist()
 def mark_call_status(contact, status):
     """Log call status and create call log"""
