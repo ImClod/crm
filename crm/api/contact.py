@@ -52,7 +52,7 @@ def get_scheduled_calls():
 
     # Recupera i contatti con date corrispondenti a oggi
     contacts = frappe.get_all(
-        "CRM Contact",
+        "CRM Contacts",
         filters=[
             ["custom_first_date", "=", today],
             ["custom_creation_date", "=", today],
