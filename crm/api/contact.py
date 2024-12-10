@@ -43,14 +43,9 @@ def update_deals_email_mobile_no(doc):
 
 @frappe.whitelist()
 def get_scheduled_calls():
-    """
-    Retrieve scheduled calls for today that haven't been called yet
-    """
-
-    # Ottieni la data di oggi
     today = getdate(nowdate())
-
-    # Recupera i contatti con date corrispondenti a oggi
+    
+    # Recupera i campi disponibili
     contacts = frappe.get_all(
         "CRM Contacts",
         filters=[
@@ -60,42 +55,45 @@ def get_scheduled_calls():
         ],
         fields=[
             "name",
-            "first_name",
-            "last_name",
             "email",
             "mobile_no",
             "custom_creation_date",
-            "custom_first_date",
+            "custom_first_date", 
             "custom_second_date",
         ],
     )
 
-    # Filtra i contatti che non hanno chiamate oggi
     scheduled_calls = []
     for contact in contacts:
-        # Verifica se esiste già un call log per questo contatto oggi
+        # Recupera il documento completo per ottenere campi aggiuntivi
+        full_contact = frappe.get_doc("CRM Contacts", contact["name"])
+        
+        # Prova a recuperare il nome in modi diversi
+        full_name = (
+            getattr(full_contact, 'full_name', '') or 
+            getattr(full_contact, 'contact_name', '') or 
+            contact.get("name", "")
+        )
+
         existing_call_logs = frappe.get_all(
             "CRM Call Log",
             filters={
-                "reference_doctype": "Contact",
+                "reference_doctype": "CRM Contacts",
                 "reference_docname": contact["name"],
                 "creation": ["between", [today + " 00:00:00", today + " 23:59:59"]],
             },
         )
 
-        # Se non esistono call log, aggiungi alle chiamate pianificate
         if not existing_call_logs:
-            scheduled_calls.append(
-                {
-                    "name": contact.get("name"),
-                    "full_name": f"{contact.get('first_name', '')} {contact.get('last_name', '')}".strip(),
-                    "email": contact.get("email"),
-                    "mobile_no": contact.get("mobile_no"),
-                    "custom_first_date": frappe.utils.format_date(contact.get("custom_first_date")),
-                    "custom_creation_date": frappe.utils.format_date(contact.get("custom_creation_date")),
-                    "custom_second_date": frappe.utils.format_date(contact.get("custom_second_date")),
-                }
-            )
+            scheduled_calls.append({
+                "name": contact.get("name"),
+                "full_name": full_name,
+                "email": contact.get("email"),
+                "mobile_no": contact.get("mobile_no"),
+                "custom_first_date": frappe.utils.format_date(contact.get("custom_first_date")),
+                "custom_creation_date": frappe.utils.format_date(contact.get("custom_creation_date")),
+                "custom_second_date": frappe.utils.format_date(contact.get("custom_second_date")),
+            })
 
     return scheduled_calls
 @frappe.whitelist()
