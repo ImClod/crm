@@ -46,17 +46,17 @@ def get_scheduled_calls():
     """
     Retrieve scheduled calls for today that haven't been called yet
     """
-    from frappe.utils import nowdate, getdate
+    from frappe.utils import nowdate, getdate # type: ignore
 
     # Ottieni la data di oggi
     today = getdate(nowdate())
 
-    # Recupera i contatti utilizzando frappe.get_all()
+    # Recupera i contatti con date corrispondenti a oggi
     contacts = frappe.get_all(
         'CRM Contact',
         filters=[
-            ['custom_creation_date', '=', today] | 
-            ['custom_first_date', '=', today] | 
+			['custom_creation_date', '=', today], 
+            ['custom_first_date', '=', today], 
             ['custom_second_date', '=', today]
         ],
         fields=[
@@ -86,19 +86,12 @@ def get_scheduled_calls():
 
         # Se non esistono call log, aggiungi alle chiamate pianificate
         if not existing_call_logs:
-            # Scegli la prima data disponibile
-            scheduled_date = (
-                contact.get('custom_first_date') or 
-                contact.get('custom_creation_date') or 
-                contact.get('custom_second_date')
-            )
-
             formatted_calls.append({
                 'name': contact.get('name'),
                 'full_name': f"{contact.get('first_name', '')} {contact.get('last_name', '')}".strip(),
                 'email': contact.get('email'),
                 'mobile_no': contact.get('mobile_no'),
-                'custom_first_date': frappe.utils.format_date(scheduled_date)
+                'custom_first_date': frappe.utils.format_date(today)
             })
 
     return formatted_calls
