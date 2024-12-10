@@ -217,41 +217,6 @@ def add_email_template_custom_fields():
 		)
 
 		frappe.clear_cache(doctype="Email Template")
-
-def add_contact_custom_fields():
-	"""Add custom fields to Contact doctype"""
-	click.secho("* Installing Custom Fields in Contact")
-
-	create_custom_fields(
-		{
-			"Contact": [
-				{
-					"fieldname": "custom_creation_date",
-					"fieldtype": "Date",
-					"label": "Creation Date",
-					"insert_after": "designation",
-					"read_only": 0
-				},
-				{
-					"fieldname": "custom_first_date",
-					"fieldtype": "Date",
-					"label": "First Date",
-					"insert_after": "custom_creation_date",
-					"read_only": 0
-				},
-				{
-					"fieldname": "custom_second_date",
-					"fieldtype": "Date",
-					"label": "Second Date",
-					"insert_after": "custom_first_date",
-					"read_only": 0
-				},
-			]
-		}
-	)
-
-	frappe.clear_cache(doctype="Contact")
-
 def add_default_industries():
 	industries = ["Accounting", "Advertising", "Aerospace", "Agriculture", "Airline", "Apparel & Accessories", "Automotive", "Banking", "Biotechnology", "Broadcasting", "Brokerage", "Chemical", "Computer", "Consulting", "Consumer Products", "Cosmetics", "Defense", "Department Stores", "Education", "Electronics", "Energy", "Entertainment & Leisure, Executive Search", "Financial Services", "Food", "Beverage & Tobacco", "Grocery", "Health Care", "Internet Publishing", "Investment Banking", "Legal", "Manufacturing", "Motion Picture & Video", "Music", "Newspaper Publishers", "Online Auctions", "Pension Funds", "Pharmaceuticals", "Private Equity", "Publishing", "Real Estate", "Retail & Wholesale", "Securities & Commodity Exchanges", "Service", "Soap & Detergent", "Software", "Sports", "Technology", "Telecommunications", "Television", "Transportation", "Venture Capital"]
 
