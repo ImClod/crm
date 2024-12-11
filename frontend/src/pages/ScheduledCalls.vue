@@ -1,157 +1,106 @@
 <template>
-  <LayoutHeader>
-    <template #left-header>
-      <div class="flex items-center gap-2">
-        <h1 class="text-xl font-bold">{{ __('Scheduled Calls') }}</h1>
-      </div>
-    </template>
-    <template #right-header>
-      <div class="flex items-center gap-2">
-        <DateRangePicker 
-          v-model="dateRange"
-          @change="updateDateFilter"
+  <div>
+    <LayoutHeader>
+      <template #left-header>
+        <ViewBreadcrumbs v-model="viewControls" routeName="Scheduled Calls" />
+      </template>
+      <template #right-header>
+        <CustomActions
+          v-if="scheduledCallsListView?.customListActions"
+          :actions="scheduledCallsListView.customListActions"
         />
-      </div>
-    </template>
-  </LayoutHeader>
+      </template>
+    </LayoutHeader>
 
-  <ScheduledCallsListView
-    :rows="formattedRows"
-    :columns="columns"
-    :options="{
-      rowCount: list.data?.row_count || 0,
-      totalCount: list.data?.total_count || 0,
-      selectable: true,
-      showTooltip: true,
-      resizeColumn: true,
-    }"
-    @showScheduledCall="navigateToContact"
-    @loadMore="loadMore"
-  >
-    <template #actions="{ row }">
-      <div class="flex gap-2">
-        <Button
-          variant="solid"
-          theme="green"
-          size="sm"
-          :label="__('Confirm')"
-          @click="markCallStatus(row, 'Confirmed')"
-        >
-          <template #prefix>
-            <CheckIcon class="w-4 h-4" />
-          </template>
-        </Button>
-        <Button
-          variant="solid"
-          theme="red"
-          size="sm"
-          :label="__('Reject')"
-          @click="markCallStatus(row, 'Canceled')"
-        >
-          <template #prefix>
-            <DeclinedCallIcon  class="w-4 h-4" />
-          </template>
-        </Button>
+    <ViewControls
+      ref="viewControls"
+      v-model="scheduledCalls"
+      v-model:loadMore="loadMore"
+      v-model:resizeColumn="triggerResize"
+      v-model:updatedPageCount="updatedPageCount"
+      doctype="CRM Scheduled Call"
+    />
+
+    <ScheduledCallsListView
+      ref="scheduledCallsListView"
+      v-if="scheduledCalls.data && rows.length"
+      v-model="scheduledCalls.data.page_length_count"
+      v-model:list="scheduledCalls"
+      :rows="rows"
+      :columns="scheduledCalls.data.columns"
+      :options="{
+        showTooltip: false,
+        resizeColumn: true,
+        rowCount: scheduledCalls.data.row_count,
+        totalCount: scheduledCalls.data.total_count,
+      }"
+      @showScheduledCall="showScheduledCall"
+      @loadMore="() => loadMore++"
+      @columnWidthUpdated="() => triggerResize++"
+      @updatePageCount="(count) => (updatedPageCount = count)"
+      @applyFilter="(data) => viewControls.applyFilter(data)"
+      @applyLikeFilter="(data) => viewControls.applyLikeFilter(data)"
+      @likeDoc="(data) => viewControls.likeDoc(data)"
+    />
+
+    <div 
+      v-else-if="scheduledCalls.data"
+      class="flex h-full items-center justify-center"
+    >
+      <div
+        class="flex flex-col items-center gap-3 text-xl font-medium text-gray-500"
+      >
+        <PhoneIcon class="h-10 w-10" />
+        <span>{{ __('No {0} Found', [__('Scheduled Calls')]) }}</span>
       </div>
-    </template>
-  </ScheduledCallsListView>
+    </div>
+
+    <ScheduledCallModal 
+      v-model="showScheduledCallModal" 
+      :name="selectedScheduledCall" 
+    />
+  </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { createResource, call, Button,DateRangePicker ,toast } from 'frappe-ui'
-import { useRouter } from 'vue-router'
-
+import { computed, ref } from 'vue'
+import PhoneIcon from '@/components/Icons/PhoneIcon.vue'
+import ViewBreadcrumbs from '@/components/ViewBreadcrumbs.vue'
+import CustomActions from '@/components/CustomActions.vue'
+import LayoutHeader from '@/components/LayoutHeader.vue'
+import ViewControls from '@/components/ViewControls.vue'
 import ScheduledCallsListView from '@/components/ListViews/ScheduledCallsListView.vue'
-import CheckIcon from '@/components/Icons/CheckIcon.vue'
-import DeclinedCallIcon from '@/components/Icons/DeclinedCallIcon.vue'
+import ScheduledCallModal from '@/components/Modals/ScheduledCallModal.vue'
+import { getScheduledCallDetail } from '@/utils/scheduledCall'
 
-const router = useRouter()
+const scheduledCallsListView = ref(null)
+const scheduledCalls = ref({})
+const loadMore = ref(1)
+const triggerResize = ref(1)
+const updatedPageCount = ref(20)
+const viewControls = ref(null)
 
+const rows = computed(() => {
+  if (
+    !scheduledCalls.value?.data?.data ||
+    !['list', 'group_by'].includes(scheduledCalls.value.data.view_type)
+  )
+    return []
 
-// Stato per i filtri
-const dateRange = ref(null)
-
-// Risorsa per la lista delle chiamate programmate
-const list = createResource({
-  url: 'crm.api.contact.get_scheduled_calls',
-  params: {},
-  auto: true
-})
-
-// Definisci le colonne
-const columns = ref([
-  { 
-    key: 'full_name', 
-    label: 'Contact Name', 
-    type: 'Link',
-    width: '16rem'
-  },
-  { 
-    key: 'mobile_no', 
-    label: 'Mobile No', 
-    type: 'Data',
-    width: '12rem'
-  },
-  { 
-    key: 'custom_first_date', 
-    label: 'Call Status', 
-    type: 'Data',
-    width: '12rem'
-  },
-  { 
-    key: 'actions', 
-    label: 'Actions', 
-    type: 'Custom',
-    width: '15rem'
-  }
-])
-
-// Formatta le righe per aggiungere informazioni personalizzate
-const formattedRows = computed(() => {
-  return (list.data || []).map(call => ({
-    ...call,
-    full_name: call.full_name || 'Unknown',
-    mobile_no: call.mobile_no || 'N/A',
-    custom_first_date: call.custom_first_date || 'Not Scheduled'
-  }))
-})
-
-// Navigazione al contatto quando si clicca su una riga
-function navigateToContact(row) {
-  if (row.contact_link) {
-    router.push(row.contact_link)
-  }
-}
-
-// Marcare lo stato della chiamata
-async function markCallStatus(row, status) {
-  try {
-    const result = await call('crm.api.contact.mark_call_status', {
-      contact: row.full_name,
-      status: status
+  return scheduledCalls.value?.data.data.map((scheduledCall) => {
+    let _rows = {}
+    scheduledCalls.value?.data.rows.forEach((row) => {
+      _rows[row] = getScheduledCallDetail(row, scheduledCall)
     })
+    return _rows
+  })
+})
 
-    if (result.status === 'success') {
-      toast.success(result.message)
-      // Ricarica la lista delle chiamate
-      list.reload()
-    } else {
-      toast.error(result.message)
-    }
-  } catch (error) {
-    console.error('Error marking call status:', error)
-    toast.error('An error occurred while updating call status')
-  }
-}
+const showScheduledCallModal = ref(false)
+const selectedScheduledCall = ref(null)
 
-// Caricamento di più elementi
-function loadMore() {
-  list.reload()
-}
-
-// Funzione per aggiornare i filtri data
-function updateDateFilter() {
-  // Logica per aggiornare i filtri in base alla selezione della data
+function showScheduledCall(name) {
+  selectedScheduledCall.value = name
+  showScheduledCallModal.value = true
 }
 </script>
