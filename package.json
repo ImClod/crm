@@ -9,7 +9,5 @@
         "dev": "cd frontend && yarn dev",
         "build": "cd frontend && yarn build"
     },
-    "dependencies": {
-        "vue-toastification": "^1.7.14"
-    }
+    "dependencies": {}
 }

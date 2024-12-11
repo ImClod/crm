@@ -49,7 +49,7 @@
           @click="markCallStatus(row, 'Canceled')"
         >
           <template #prefix>
-            <DeclinedCallIconpo  class="w-4 h-4" />
+            <DeclinedCallIcon  class="w-4 h-4" />
           </template>
         </Button>
       </div>
@@ -59,15 +59,15 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { createResource, call, Button,DateRangePicker } from 'frappe-ui'
+import { createResource, call, Button,DateRangePicker ,toast } from 'frappe-ui'
 import { useRouter } from 'vue-router'
-import { useToast } from 'vue-toastification'
+
 import ScheduledCallsListView from '@/components/ListViews/ScheduledCallsListView.vue'
 import CheckIcon from '@/components/Icons/CheckIcon.vue'
 import DeclinedCallIcon from '@/components/Icons/DeclinedCallIcon.vue'
 
 const router = useRouter()
-const toast = useToast()
+
 
 // Stato per i filtri
 const dateRange = ref(null)
