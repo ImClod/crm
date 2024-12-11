@@ -1,44 +1,53 @@
 <template>
-    <Dialog v-model="show">
-      <template #body-title>
-        <div class="flex items-center gap-3">
-          <h3 class="text-2xl font-semibold leading-6 text-gray-900">
-            {{ __('Scheduled Call Details') }}
-          </h3>
-        </div>
-      </template>
+    <Dialog v-model="show" :options="{ title: __('Scheduled Call Details'), size: 'xl' }">
       <template #body-content>
-        <div class="flex flex-col gap-3.5">
-          <div
-            v-for="field in detailFields"
-            :key="field.name"
-            class="flex gap-2 text-base text-gray-800"
-          >
-            <div class="grid size-7 place-content-center">
-              <component :is="field.icon" />
-            </div>
-            <div class="flex min-h-7 w-full items-center gap-2">
-              <div v-if="field.name === 'contact'" class="flex items-center gap-1">
-                <Avatar
-                  :image="field.value.image"
-                  :label="field.value.label"
-                  size="sm"
-                />
-                <div class="ml-1 flex flex-col gap-1">
-                  {{ field.value.label }}
-                </div>
+        <div v-if="call" class="grid grid-cols-2 gap-4">
+          <div class="flex flex-col gap-3">
+            <div class="flex items-center gap-3">
+              <UserIcon class="h-5 w-5 text-gray-600" />
+              <div>
+                <div class="text-base font-semibold">{{ __('Contact') }}</div>
+                <div>{{ call.full_name || 'N/A' }}</div>
               </div>
-              <Tooltip v-else-if="field.tooltip" :text="field.tooltip">
-                {{ field.value }}
-              </Tooltip>
-              <div 
-                v-else 
-                :class="field.color ? `text-${field.color}-600` : ''"
-              >
-                {{ field.value }}
+            </div>
+  
+            <div class="flex items-center gap-3">
+              <PhoneIcon class="h-5 w-5 text-gray-600" />
+              <div>
+                <div class="text-base font-semibold">{{ __('Phone') }}</div>
+                <div>{{ call.mobile_no || 'N/A' }}</div>
+              </div>
+            </div>
+  
+            <div class="flex items-center gap-3">
+              <MailIcon class="h-5 w-5 text-gray-600" />
+              <div>
+                <div class="text-base font-semibold">{{ __('Email') }}</div>
+                <div>{{ call.email || 'N/A' }}</div>
               </div>
             </div>
           </div>
+  
+          <div class="flex flex-col gap-3">
+            <div class="flex items-center gap-3">
+              <CalendarIcon class="h-5 w-5 text-gray-600" />
+              <div>
+                <div class="text-base font-semibold">{{ __('Scheduled Date') }}</div>
+                <div>{{ call.custom_first_date || 'N/A' }}</div>
+              </div>
+            </div>
+  
+            <div class="flex items-center gap-3">
+              <ClockIcon class="h-5 w-5 text-gray-600" />
+              <div>
+                <div class="text-base font-semibold">{{ __('Status') }}</div>
+                <div>{{ call.status || 'N/A' }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div v-else class="text-center text-gray-500">
+          {{ __('No call details available') }}
         </div>
       </template>
     </Dialog>
@@ -46,86 +55,21 @@
   
   <script setup>
   import { 
-    FeatherIcon, 
-    Avatar, 
-    Tooltip, 
-    createDocumentResource 
+    Dialog, 
   } from 'frappe-ui'
-  import { ref, computed, h, watch } from 'vue'
-  import { useRouter } from 'vue-router'
   
+  import UserIcon from '@/components/Icons/UserIcon.vue'
+  import PhoneIcon from '@/components/Icons/PhoneIcon.vue'
+  import MailIcon from '@/components/Icons/MailIcon.vue'
   import CalendarIcon from '@/components/Icons/CalendarIcon.vue'
-  import ContactsIcon from '@/components/Icons/ContactsIcon.vue'
-  import ContactIcon from '@/components/Icons/ContactIcon.vue'
-  import CheckCircleIcon from '@/components/Icons/CheckCircleIcon.vue'
+  import ClockIcon from '@/components/Icons/ClockIcon.vue'
   
   const props = defineProps({
-    name: {
-      type: String,
-      default: '',
-    },
+    call: {
+      type: Object,
+      default: () => ({})
+    }
   })
   
   const show = defineModel()
-  const router = useRouter()
-  const scheduledCall = ref({})
-  
-  const detailFields = computed(() => {
-    if (!scheduledCall.value.doc) return []
-    
-    let details = [
-      {
-        icon: ContactsIcon,
-        name: 'contact',
-        value: {
-          label: scheduledCall.value.doc.contact_name,
-          image: scheduledCall.value.doc.contact_image
-        }
-      },
-      {
-        icon: CalendarIcon,
-        name: 'date',
-        value: scheduledCall.value.doc.date,
-        tooltip: scheduledCall.value.doc.date_formatted
-      },
-      {
-        icon: ContactIcon,
-        name: 'owner',
-        value: scheduledCall.value.doc.owner_name
-      },
-      {
-        icon: CheckCircleIcon,
-        name: 'status',
-        value: scheduledCall.value.doc.status,
-        color: scheduledCall.value.doc.status_color
-      }
-    ]
-  
-    return details.filter(detail => detail.value)
-  })
-  
-  watch(show, (val) => {
-    if (val) {
-      scheduledCall.value = createDocumentResource({
-        doctype: 'CRM Scheduled Call',
-        name: props.name,
-        fields: [
-          'name', 
-          'contact', 
-          'contact_name', 
-          'contact_image', 
-          'date', 
-          'status', 
-          'owner',
-          'notes'
-        ],
-        cache: ['scheduled_call', props.name],
-        auto: true,
-        transform: (doc) => {
-          // Aggiungi qui eventuali trasformazioni dei dati
-          return doc
-        }
-      })
-    }
-  })
   </script>

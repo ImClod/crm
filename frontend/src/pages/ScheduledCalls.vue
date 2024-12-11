@@ -2,7 +2,10 @@
   <div>
     <LayoutHeader>
       <template #left-header>
-        <ViewBreadcrumbs v-model="viewControls" routeName="Scheduled Calls" />
+        <ViewBreadcrumbs 
+          v-model="viewControls" 
+          routeName="Scheduled Calls" 
+        />
       </template>
       <template #right-header>
         <CustomActions
@@ -57,13 +60,15 @@
 
     <ScheduledCallModal 
       v-model="showScheduledCallModal" 
-      :name="selectedScheduledCall" 
+      :call="selectedScheduledCall" 
     />
   </div>
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { ref, computed } from 'vue'
+import { createResource } from 'frappe-ui'
+
 import PhoneIcon from '@/components/Icons/PhoneIcon.vue'
 import ViewBreadcrumbs from '@/components/ViewBreadcrumbs.vue'
 import CustomActions from '@/components/CustomActions.vue'
@@ -71,14 +76,24 @@ import LayoutHeader from '@/components/LayoutHeader.vue'
 import ViewControls from '@/components/ViewControls.vue'
 import ScheduledCallsListView from '@/components/ListViews/ScheduledCallsListView.vue'
 import ScheduledCallModal from '@/components/Modals/ScheduledCallModal.vue'
-import { getScheduledCallDetail } from '@/utils/scheduledCall'
 
 const scheduledCallsListView = ref(null)
-const scheduledCalls = ref({})
 const loadMore = ref(1)
 const triggerResize = ref(1)
 const updatedPageCount = ref(20)
 const viewControls = ref(null)
+
+const scheduledCalls = createResource({
+  url: 'crm.api.contacts.get_scheduled_calls',
+  auto: true,
+  transform(data) {
+    return data.map(call => ({
+      ...call,
+      full_name: call.full_name || 'Unknown',
+      status: call.status || 'Pending'
+    }))
+  }
+})
 
 const rows = computed(() => {
   if (
@@ -90,7 +105,7 @@ const rows = computed(() => {
   return scheduledCalls.value?.data.data.map((scheduledCall) => {
     let _rows = {}
     scheduledCalls.value?.data.rows.forEach((row) => {
-      _rows[row] = getScheduledCallDetail(row, scheduledCall)
+      _rows[row] = scheduledCall[row]
     })
     return _rows
   })
@@ -99,8 +114,8 @@ const rows = computed(() => {
 const showScheduledCallModal = ref(false)
 const selectedScheduledCall = ref(null)
 
-function showScheduledCall(name) {
-  selectedScheduledCall.value = name
+function showScheduledCall(call) {
+  selectedScheduledCall.value = call
   showScheduledCallModal.value = true
 }
 </script>
