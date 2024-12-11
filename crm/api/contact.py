@@ -1,4 +1,6 @@
-
+import frappe
+from frappe import _
+from frappe.utils import nowdate, getdate  # type: ignore
 
 def validate(doc, method):
 	set_primary_email(doc)
@@ -41,9 +43,7 @@ def update_deals_email_mobile_no(doc):
 
 @frappe.whitelist()
 def get_scheduled_calls():
-	import frappe
-	from frappe import _
-	from frappe.utils import nowdate, getdate  # type: ignore
+	
 	today = getdate(nowdate())
 	contacts = frappe.get_all(
 			"Contact",

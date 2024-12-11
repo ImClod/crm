@@ -66,16 +66,16 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { createResource } from 'frappe-ui'
 
-import PhoneIcon from '@/components/Icons/PhoneIcon.vue'
-import ViewBreadcrumbs from '@/components/ViewBreadcrumbs.vue'
-import CustomActions from '@/components/CustomActions.vue'
-import LayoutHeader from '@/components/LayoutHeader.vue'
-import ViewControls from '@/components/ViewControls.vue'
-import ScheduledCallsListView from '@/components/ListViews/ScheduledCallsListView.vue'
-import ScheduledCallModal from '@/components/Modals/ScheduledCallModal.vue'
+import PhoneIcon from 'components/Icons/PhoneIcon.vue'
+import ViewBreadcrumbs from 'components/ViewBreadcrumbs.vue'
+import CustomActions from 'components/CustomActions.vue'
+import LayoutHeader from 'components/LayoutHeader.vue'
+import ViewControls from 'components/ViewControls.vue'
+import ScheduledCallsListView from 'components/ListViews/ScheduledCallsListView.vue'
+import ScheduledCallModal from 'components/Modals/ScheduledCallModal.vue'
 
 const scheduledCallsListView = ref(null)
 const loadMore = ref(1)
@@ -87,6 +87,7 @@ const scheduledCalls = createResource({
   url: 'crm.api.contacts.get_scheduled_calls',
   auto: true,
   transform(data) {
+    console.log("API Response:", data); // Debugging statement
     return data.map(call => ({
       ...call,
       full_name: call.full_name || 'Unknown',
@@ -109,6 +110,11 @@ const rows = computed(() => {
     })
     return _rows
   })
+})
+
+// Watch for changes in scheduledCalls to log the transformed data
+watch(scheduledCalls, (newValue) => {
+  console.log("Transformed Data:", newValue); // Debugging statement
 })
 
 const showScheduledCallModal = ref(false)
