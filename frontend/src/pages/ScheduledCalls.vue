@@ -84,7 +84,7 @@ const updatedPageCount = ref(20)
 const viewControls = ref(null)
 
 const scheduledCalls = createResource({
-  url: 'crm.api.contacts.get_scheduled_calls',
+  url: 'crm.api.contact.get_scheduled_calls',
   auto: true,
   transform(data) {
     console.log("API Response:", data); // Debugging statement
