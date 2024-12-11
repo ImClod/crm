@@ -4,7 +4,7 @@
         <div v-if="call" class="grid grid-cols-2 gap-4">
           <div class="flex flex-col gap-3">
             <div class="flex items-center gap-3">
-              <UserIcon class="h-5 w-5 text-gray-600" />
+              <ContactIcon class="h-5 w-5 text-gray-600" />
               <div>
                 <div class="text-base font-semibold">{{ __('Contact') }}</div>
                 <div>{{ call.full_name || 'N/A' }}</div>
@@ -58,7 +58,7 @@
     Dialog, 
   } from 'frappe-ui'
   
-  import UserIcon from '@/components/Icons/UserIcon.vue'
+  import ContactIcon from '@/components/Icons/ContactIcon.vue'
   import PhoneIcon from '@/components/Icons/PhoneIcon.vue'
   import MailIcon from '@/components/Icons/MailIcon.vue'
   import CalendarIcon from '@/components/Icons/CalendarIcon.vue'
