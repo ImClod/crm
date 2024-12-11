@@ -56,7 +56,7 @@
   
   import CalendarIcon from '@/components/Icons/CalendarIcon.vue'
   import ContactsIcon from '@/components/Icons/ContactsIcon.vue'
-  import UserIcon from '@/components/Icons/UserIcon.vue'
+  import ContactIcon from '@/components/Icons/ContactIcon.vue'
   import CheckCircleIcon from '@/components/Icons/CheckCircleIcon.vue'
   
   const props = defineProps({
@@ -89,7 +89,7 @@
         tooltip: scheduledCall.value.doc.date_formatted
       },
       {
-        icon: UserIcon,
+        icon: ContactIcon,
         name: 'owner',
         value: scheduledCall.value.doc.owner_name
       },
