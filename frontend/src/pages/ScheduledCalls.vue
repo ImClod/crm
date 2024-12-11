@@ -69,13 +69,13 @@
 import { ref, computed, watch } from 'vue'
 import { createResource } from 'frappe-ui'
 
-import PhoneIcon from 'components/Icons/PhoneIcon.vue'
-import ViewBreadcrumbs from 'components/ViewBreadcrumbs.vue'
-import CustomActions from 'components/CustomActions.vue'
-import LayoutHeader from 'components/LayoutHeader.vue'
-import ViewControls from 'components/ViewControls.vue'
-import ScheduledCallsListView from 'components/ListViews/ScheduledCallsListView.vue'
-import ScheduledCallModal from 'components/Modals/ScheduledCallModal.vue'
+import PhoneIcon from '@/components/Icons/PhoneIcon.vue'
+import ViewBreadcrumbs from '@/components/ViewBreadcrumbs.vue'
+import CustomActions from '@/components/CustomActions.vue'
+import LayoutHeader from '@/components/LayoutHeader.vue'
+import ViewControls from '@/components/ViewControls.vue'
+import ScheduledCallsListView from '@/components/ListViews/ScheduledCallsListView.vue'
+import ScheduledCallModal from '@/components/Modals/ScheduledCallModal.vue'
 
 const scheduledCallsListView = ref(null)
 const loadMore = ref(1)
