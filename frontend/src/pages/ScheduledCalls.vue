@@ -13,31 +13,10 @@
     <ViewControls ref="viewControls" v-model="scheduledCalls" v-model:loadMore="loadMore"
       v-model:resizeColumn="triggerResize" v-model:updatedPageCount="updatedPageCount" doctype="CRM Scheduled Call" />
 
-    <ScheduledCallsListView ref="scheduledCallsListView" v-if="scheduledCalls.data && rows.length"
-      v-model="scheduledCalls.data.page_length_count" v-model:list="scheduledCalls" :rows="rows" :columns="[
-        { label: 'Nome', key: 'full_name', type: 'Data' },
-        { label: 'Email', key: 'email', type: 'Data' },
-        { label: 'Numero Mobile', key: 'mobile_no', type: 'Data' },
-        { label: 'Stato', key: 'status', type: 'Data' }
-      ]" :options="{
-    showTooltip: false,
-    resizeColumn: true,
-    rowCount: scheduledCalls.data.row_count,
-    totalCount: scheduledCalls.data.total_count,
-  }" @showScheduledCall="showScheduledCall" @loadMore="() => loadMore++"
-      @columnWidthUpdated="() => triggerResize++" @updatePageCount="(count) => (updatedPageCount = count)"
-      @applyFilter="(data) => viewControls.applyFilter(data)"
-      @applyLikeFilter="(data) => viewControls.applyLikeFilter(data)" @likeDoc="(data) => viewControls.likeDoc(data)" />
-
-    <div v-else-if="scheduledCalls.data" class="flex h-full items-center justify-center">
-      <div class="flex flex-col items-center gap-3 text-xl font-medium text-gray-500">
-        <PhoneIcon class="h-10 w-10" />
-        <span>{{ __('No {0} Found', [__('Scheduled Calls')]) }}</span>
-      </div>
-    </div>
-
-    <ScheduledCallModal v-model="showScheduledCallModal" :call="selectedScheduledCall" />
-  </div>
+      <ScheduledCallsListView 
+        :rows="rows" 
+        :columns="columns"
+      />
 </template>
 
 <script setup>
@@ -72,19 +51,44 @@ const scheduledCalls = createResource({
 })
 
 const rows = computed(() => {
-  if (!scheduledCalls.value?.data?.data)
-    return []
+  // Controlla se scheduledCalls.value e scheduledCalls.value.data esistono
+  if (!scheduledCalls.value?.data) return []
 
-  return scheduledCalls.value.data.data.map((scheduledCall) => {
-    return {
-      full_name: scheduledCall.full_name,
-      email: scheduledCall.email,
-      mobile_no: scheduledCall.mobile_no,
-      status: scheduledCall.custom_first_date
-    }
-  })
+  // Mappa i dati direttamente dall'array
+  return scheduledCalls.value.data.map(item => ({
+    full_name: item.full_name,
+    email: item.email,
+    mobile_no: item.mobile_no,
+    status: item.status || item.custom_first_date
+  }))
 })
 
+const columns = computed(() => [
+  { 
+    label: 'Nome', 
+    key: 'full_name', 
+    type: 'Data',
+    width: '200px'
+  },
+  { 
+    label: 'Email', 
+    key: 'email', 
+    type: 'Data',
+    width: '250px'
+  },
+  { 
+    label: 'Numero Mobile', 
+    key: 'mobile_no', 
+    type: 'Data',
+    width: '150px'
+  },
+  { 
+    label: 'Stato', 
+    key: 'status', 
+    type: 'Data',
+    width: '150px'
+  }
+])
 // Watch for changes in scheduledCalls to log the transformed data
 watch(scheduledCalls, (newValue) => {
   console.log("Transformed Data:", newValue); // Debugging statement
