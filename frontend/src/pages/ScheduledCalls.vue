@@ -2,66 +2,41 @@
   <div>
     <LayoutHeader>
       <template #left-header>
-        <ViewBreadcrumbs 
-          v-model="viewControls" 
-          routeName="Scheduled Calls" 
-        />
+        <ViewBreadcrumbs v-model="viewControls" routeName="Scheduled Calls" />
       </template>
       <template #right-header>
-        <CustomActions
-          v-if="scheduledCallsListView?.customListActions"
-          :actions="scheduledCallsListView.customListActions"
-        />
+        <CustomActions v-if="scheduledCallsListView?.customListActions"
+          :actions="scheduledCallsListView.customListActions" />
       </template>
     </LayoutHeader>
 
-    <ViewControls
-      ref="viewControls"
-      v-model="scheduledCalls"
-      v-model:loadMore="loadMore"
-      v-model:resizeColumn="triggerResize"
-      v-model:updatedPageCount="updatedPageCount"
-      doctype="CRM Scheduled Call"
-    />
+    <ViewControls ref="viewControls" v-model="scheduledCalls" v-model:loadMore="loadMore"
+      v-model:resizeColumn="triggerResize" v-model:updatedPageCount="updatedPageCount" doctype="CRM Scheduled Call" />
 
-    <ScheduledCallsListView
-      ref="scheduledCallsListView"
-      v-if="scheduledCalls.data && rows.length"
-      v-model="scheduledCalls.data.page_length_count"
-      v-model:list="scheduledCalls"
-      :rows="rows"
-      :columns="scheduledCalls.data.columns"
-      :options="{
-        showTooltip: false,
-        resizeColumn: true,
-        rowCount: scheduledCalls.data.row_count,
-        totalCount: scheduledCalls.data.total_count,
-      }"
-      @showScheduledCall="showScheduledCall"
-      @loadMore="() => loadMore++"
-      @columnWidthUpdated="() => triggerResize++"
-      @updatePageCount="(count) => (updatedPageCount = count)"
+    <ScheduledCallsListView ref="scheduledCallsListView" v-if="scheduledCalls.data && rows.length"
+      v-model="scheduledCalls.data.page_length_count" v-model:list="scheduledCalls" :rows="rows" :columns="[
+        { label: 'Nome', key: 'full_name', type: 'Data' },
+        { label: 'Email', key: 'email', type: 'Data' },
+        { label: 'Numero Mobile', key: 'mobile_no', type: 'Data' },
+        { label: 'Stato', key: 'status', type: 'Data' }
+      ]" :options="{
+    showTooltip: false,
+    resizeColumn: true,
+    rowCount: scheduledCalls.data.row_count,
+    totalCount: scheduledCalls.data.total_count,
+  }" @showScheduledCall="showScheduledCall" @loadMore="() => loadMore++"
+      @columnWidthUpdated="() => triggerResize++" @updatePageCount="(count) => (updatedPageCount = count)"
       @applyFilter="(data) => viewControls.applyFilter(data)"
-      @applyLikeFilter="(data) => viewControls.applyLikeFilter(data)"
-      @likeDoc="(data) => viewControls.likeDoc(data)"
-    />
+      @applyLikeFilter="(data) => viewControls.applyLikeFilter(data)" @likeDoc="(data) => viewControls.likeDoc(data)" />
 
-    <div 
-      v-else-if="scheduledCalls.data"
-      class="flex h-full items-center justify-center"
-    >
-      <div
-        class="flex flex-col items-center gap-3 text-xl font-medium text-gray-500"
-      >
+    <div v-else-if="scheduledCalls.data" class="flex h-full items-center justify-center">
+      <div class="flex flex-col items-center gap-3 text-xl font-medium text-gray-500">
         <PhoneIcon class="h-10 w-10" />
         <span>{{ __('No {0} Found', [__('Scheduled Calls')]) }}</span>
       </div>
     </div>
 
-    <ScheduledCallModal 
-      v-model="showScheduledCallModal" 
-      :call="selectedScheduledCall" 
-    />
+    <ScheduledCallModal v-model="showScheduledCallModal" :call="selectedScheduledCall" />
   </div>
 </template>
 
@@ -97,18 +72,16 @@ const scheduledCalls = createResource({
 })
 
 const rows = computed(() => {
-  if (
-    !scheduledCalls.value?.data?.data ||
-    !['list', 'group_by'].includes(scheduledCalls.value.data.view_type)
-  )
+  if (!scheduledCalls.value?.data?.data)
     return []
 
-  return scheduledCalls.value?.data.data.map((scheduledCall) => {
-    let _rows = {}
-    scheduledCalls.value?.data.rows.forEach((row) => {
-      _rows[row] = scheduledCall[row]
-    })
-    return _rows
+  return scheduledCalls.value.data.data.map((scheduledCall) => {
+    return {
+      full_name: scheduledCall.full_name,
+      email: scheduledCall.email,
+      mobile_no: scheduledCall.mobile_no,
+      status: scheduledCall.custom_first_date
+    }
   })
 })
 
