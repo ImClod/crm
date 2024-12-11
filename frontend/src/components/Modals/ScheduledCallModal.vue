@@ -38,7 +38,7 @@
             </div>
   
             <div class="flex items-center gap-3">
-              <ClockIcon class="h-5 w-5 text-gray-600" />
+              <DuplicateIcon class="h-5 w-5 text-gray-600" />
               <div>
                 <div class="text-base font-semibold">{{ __('Status') }}</div>
                 <div>{{ call.status || 'N/A' }}</div>
@@ -62,7 +62,7 @@
   import PhoneIcon from '@/components/Icons/PhoneIcon.vue'
   import InboxIcon from '@/components/Icons/InboxIcon.vue'
   import CalendarIcon from '@/components/Icons/CalendarIcon.vue'
-  import ClockIcon from '@/components/Icons/ClockIcon.vue'
+  import DuplicateIcon from '@/components/Icons/DuplicateIcon.vue'
   
   const props = defineProps({
     call: {
