@@ -20,7 +20,7 @@
             </div>
   
             <div class="flex items-center gap-3">
-              <MailIcon class="h-5 w-5 text-gray-600" />
+              <InboxIcon class="h-5 w-5 text-gray-600" />
               <div>
                 <div class="text-base font-semibold">{{ __('Email') }}</div>
                 <div>{{ call.email || 'N/A' }}</div>
@@ -60,7 +60,7 @@
   
   import ContactIcon from '@/components/Icons/ContactIcon.vue'
   import PhoneIcon from '@/components/Icons/PhoneIcon.vue'
-  import MailIcon from '@/components/Icons/MailIcon.vue'
+  import InboxIcon from '@/components/Icons/InboxIcon.vue'
   import CalendarIcon from '@/components/Icons/CalendarIcon.vue'
   import ClockIcon from '@/components/Icons/ClockIcon.vue'
   
