@@ -91,7 +91,7 @@ const scheduledCalls = createResource({
     return data.map(call => ({
       ...call,
       full_name: call.full_name || 'Unknown',
-      status: call.status || 'Pending'
+      status: call.custom_first_date || 'Pending'
     }))
   }
 })
