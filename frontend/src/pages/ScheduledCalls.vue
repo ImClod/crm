@@ -49,7 +49,7 @@
           @click="markCallStatus(row, 'Canceled')"
         >
           <template #prefix>
-            <XIcon class="w-4 h-4" />
+            <DeclinedCallIconpo  class="w-4 h-4" />
           </template>
         </Button>
       </div>
@@ -59,13 +59,12 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { createResource, call, Button } from 'frappe-ui'
+import { createResource, call, Button,DateRangePicker } from 'frappe-ui'
 import { useRouter } from 'vue-router'
 import { useToast } from 'vue-toastification'
 import ScheduledCallsListView from '@/components/ListViews/ScheduledCallsListView.vue'
-import DateRangePicker from '@/components/DateRangePicker.vue'
 import CheckIcon from '@/components/Icons/CheckIcon.vue'
-import XIcon from '@/components/Icons/XIcon.vue'
+import DeclinedCallIcon from '@/components/Icons/DeclinedCallIcon.vue'
 
 const router = useRouter()
 const toast = useToast()
