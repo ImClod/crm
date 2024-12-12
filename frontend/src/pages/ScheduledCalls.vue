@@ -61,12 +61,12 @@ export default {
 
     const goToContact = (row) => {
       // Redireziona alla scheda del contatto
-      window.location.href = `/app/contact/${row.full_name}`; 
+      window.location.href = `/crm/contacts/${row.full_name}`; 
     };
 
     const markCallStatus = async (contact, status) => {
       try {
-        await call('crm.contact.mark_call_status', {
+        await call('crm.api.contact.mark_call_status', {
           contact: contact.name,
           status: status,
         });
