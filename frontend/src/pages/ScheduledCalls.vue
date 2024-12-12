@@ -67,7 +67,7 @@ export default {
     const markCallStatus = async (contact, status) => {
       try {
         await call('crm.api.contact.mark_call_status', {
-          contact: contact.full_name,
+          contact: contact,
           status: status,
         });
         resource.data = null;
