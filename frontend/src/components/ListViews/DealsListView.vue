@@ -5,8 +5,8 @@
     :rows="rows"
     :options="{
       getRowRoute: (row) => ({
-        name: 'Deal',
-        params: { dealId: row.name },
+        name: 'Deal', 
+        params: { [routeParamKey]: row[routeParamKey] }, // Use dynamic param key
         query: { view: route.query.view, viewType: route.params.viewType },
       }),
       selectable: options.selectable,
