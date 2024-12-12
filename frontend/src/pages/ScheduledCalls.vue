@@ -47,7 +47,7 @@ import { computed } from 'vue';
 export default {
   setup() {
     const resource = createResource({
-      url: '/api/contact/get_scheduled_calls',
+      url: 'crm.api.contacts.get_scheduled_calls',
       auto: true,
     });
 
@@ -60,7 +60,7 @@ export default {
 
     const markCallStatus = async (contact, status) => {
       try {
-        const response = await fetch('/api/contact/mark_call_status', { // Assicurati di inserire il percorso corretto dell'API
+        const response = await fetch('crm.api.contacts.mark_call_status', { // Assicurati di inserire il percorso corretto dell'API
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
