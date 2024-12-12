@@ -95,7 +95,7 @@ def get_scheduled_calls():
                 })
     return scheduled_calls
 @frappe.whitelist()
-def mark_call_status(contact, status):
+def mark_call_status(mobile_no,name, status):
     """Log call status and create call log"""
     try:
         # Crea log chiamata
@@ -108,20 +108,20 @@ def mark_call_status(contact, status):
         call_log.update({
             'id': unique_id,  # Aggiungi ID univoco
             'caller': frappe.session.user,
-            'receiver': contact.full_name,
-			"to": contact.mobile_no,
+            'receiver': name,
+			"to": mobile_no,
             'type': 'Outgoing',
             'status': status,
             'start_time': frappe.utils.now(),
             'end_time': frappe.utils.now(),
             'reference_doctype': 'Contact',
-            'reference_docname': contact.full_name
+            'reference_docname': name
         })
         call_log.insert(ignore_permissions=True)
         
         # Pubblica evento in tempo reale per sincronizzazione
         frappe.publish_realtime('scheduled_call_updated', {
-            'contact': contact,
+            'contact': name,
             'status': status
         })
         

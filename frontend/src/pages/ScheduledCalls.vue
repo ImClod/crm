@@ -24,7 +24,7 @@
             <td class="px-6 py-4 whitespace-nowrap cursor-pointer">{{ row.full_name }}</td>
             <td class="px-6 py-4 whitespace-nowrap">{{ row.email }}</td>
             <td class="px-6 py-4 whitespace-nowrap">{{ row.mobile_no }}</td>
-            <td class="px-6 py-4 whitespace-nowrap">{{ row.custom_first_date }}</td>
+            <td class="px-6 py-4 whitespace-nowrap">{{ row.status }}</td>
             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
               <button @click.stop="confirmCall(row)" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Conferma</button>
               <button @click.stop="rejectCall(row)" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded ml-4">Rifiuta</button>
@@ -67,7 +67,8 @@ export default {
     const markCallStatus = async (contact, status) => {
       try {
         await call('crm.api.contact.mark_call_status', {
-          contact: contact,
+          mobile_no: contact.mobile_no,
+          name : contact.full_name,
           status: status,
         });
         resource.data = null;
