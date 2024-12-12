@@ -47,7 +47,7 @@ import { computed } from 'vue';
 export default {
   setup() {
     const resource = createResource({
-      url: 'crm.api.contacts.get_scheduled_calls',
+      url: 'crm.api.contact.get_scheduled_calls',
       auto: true,
     });
 
