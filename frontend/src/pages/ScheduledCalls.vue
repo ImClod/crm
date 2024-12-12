@@ -60,7 +60,7 @@ export default {
 
     const markCallStatus = async (contact, status) => {
       try {
-        const response = await fetch('crm.api.contacts.mark_call_status', { // Assicurati di inserire il percorso corretto dell'API
+        const response = await fetch('crm.api.contact.mark_call_status', { // Assicurati di inserire il percorso corretto dell'API
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
