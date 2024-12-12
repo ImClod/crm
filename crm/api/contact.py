@@ -95,20 +95,30 @@ def get_scheduled_calls():
                 })
     return scheduled_calls
 @frappe.whitelist()
-def mark_call_status(mobile_no,name, status):
-    """Log call status and create call log"""
+def mark_call_status(mobile_no, name, status):
+    """
+    Log call status and create call log
+
+    Args:
+        mobile_no (str): Mobile number of the recipient.
+        name (str): Name of the contact.
+        status (str): Status of the call (e.g., "Completed", "Canceled").
+
+    Returns:
+        dict: A dictionary containing the status and message of the operation.
+    """
     try:
         # Crea log chiamata
         call_log = frappe.new_doc('CRM Call Log')
-        
+
         # Genera un ID univoco
         import uuid
         unique_id = str(uuid.uuid4())[:12]  # Usa UUID per generare ID univoco
-        
+
         call_log.update({
             'id': unique_id,  # Aggiungi ID univoco
-            'caller': "cliente: " + name,
-			"to": mobile_no,
+            'caller': frappe.session.user,
+            "to": mobile_no,  # Utilizzare mobile_no come destinatario
             'type': 'Outgoing',
             'status': status,
             'start_time': frappe.utils.now(),
@@ -117,25 +127,25 @@ def mark_call_status(mobile_no,name, status):
             'reference_docname': name
         })
         call_log.insert(ignore_permissions=True)
-        
+
         # Pubblica evento in tempo reale per sincronizzazione
         frappe.publish_realtime('scheduled_call_updated', {
             'contact': name,
             'status': status
         })
-        
+
         frappe.db.commit()
-        
+
         return {
-            'status': 'success', 
+            'status': 'success',
             'message': f'Call marked as {status} for {name}'
         }
-    
+
     except Exception as e:
         frappe.log_error(f"Error marking call status: {str(e)}")
         frappe.db.rollback()
         return {
-            'status': 'error', 
+            'status': 'error',
             'message': f'Failed to mark call: {str(e)}'
         }
 @frappe.whitelist()
