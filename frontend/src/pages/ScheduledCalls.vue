@@ -17,6 +17,7 @@
         :rows="rows" 
         :columns="columns"
       />
+  </div>
 </template>
 
 <script setup>
