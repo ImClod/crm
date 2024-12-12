@@ -107,8 +107,7 @@ def mark_call_status(mobile_no,name, status):
         
         call_log.update({
             'id': unique_id,  # Aggiungi ID univoco
-            'caller': frappe.session.user,
-            'receiver': name,
+            'caller': "cliente: " + name,
 			"to": mobile_no,
             'type': 'Outgoing',
             'status': status,
@@ -129,7 +128,7 @@ def mark_call_status(mobile_no,name, status):
         
         return {
             'status': 'success', 
-            'message': f'Call marked as {status} for {contact}'
+            'message': f'Call marked as {status} for {name}'
         }
     
     except Exception as e:

@@ -71,7 +71,6 @@ export default {
           name : contact.full_name,
           status: status,
         });
-        resource.data = null;
         // Aggiorna la lista delle chiamate dopo l'aggiornamento dello stato
         resource.reload();
         console.log('Stato chiamata aggiornato con successo.');
