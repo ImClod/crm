@@ -20,14 +20,14 @@
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
-          <tr v-for="row in rows" :key="row.name">
-            <td class="px-6 py-4 whitespace-nowrap">{{ row.full_name }}</td>
+          <tr v-for="row in rows" :key="row.name" @click="goToContact(row)"> 
+            <td class="px-6 py-4 whitespace-nowrap cursor-pointer">{{ row.full_name }}</td>
             <td class="px-6 py-4 whitespace-nowrap">{{ row.email }}</td>
             <td class="px-6 py-4 whitespace-nowrap">{{ row.mobile_no }}</td>
             <td class="px-6 py-4 whitespace-nowrap">{{ row.status }}</td>
             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-              <button @click="confirmCall(row)" class="text-green-600 hover:text-green-900">Conferma</button>
-              <button @click="rejectCall(row)" class="text-red-600 hover:text-red-900 ml-4">Rifiuta</button>
+              <button @click.prevent="confirmCall(row)" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Conferma</button>
+              <button @click.prevent="rejectCall(row)" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded ml-4">Rifiuta</button>
             </td>
           </tr>
         </tbody>
@@ -43,6 +43,7 @@
 <script>
 import { createResource } from 'frappe-ui';
 import { computed } from 'vue';
+import { call } from '@frappe/core/utils/common';
 
 export default {
   setup() {
@@ -54,39 +55,32 @@ export default {
     const rows = computed(() => {
       if (!resource.data) return [];
       return resource.data.map(item => ({
-          ...item,
+        ...item,
       }));
     });
 
+    const goToContact = (row) => {
+      // Redireziona alla scheda del contatto
+      window.location.href = `/app/contact/${row.name}`; 
+    };
+
     const markCallStatus = async (contact, status) => {
       try {
-        const response = await fetch('crm.api.contact.mark_call_status', { // Assicurati di inserire il percorso corretto dell'API
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            contact: contact.name, // Assicurati che 'name' sia l'identificativo univoco del contatto
-            status: status
-          })
+        await call('crm.contact.mark_call_status', {
+          contact: contact.name,
+          status: status,
         });
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || 'Errore durante l\'aggiornamento dello stato della chiamata.'); // Gestione più dettagliata degli errori
-        }
-
         // Aggiorna la lista delle chiamate dopo l'aggiornamento dello stato
-        resource.refresh()
+        resource.refresh();
 
         console.log('Stato chiamata aggiornato con successo.');
       } catch (error) {
         console.error('Errore durante l\'aggiornamento dello stato della chiamata:', error);
         // Qui puoi mostrare un messaggio di errore all'utente, ad esempio con un alert o un toast
-        alert("errore durante l'aggiornamento")
+        alert("Errore durante l'aggiornamento");
       }
     };
-
 
     const confirmCall = async (row) => {
       console.log('Conferma chiamata per:', row.full_name);
@@ -98,7 +92,7 @@ export default {
       await markCallStatus(row, 'Canceled');
     };
 
-    return { resource, rows, confirmCall, rejectCall };
+    return { resource, rows, confirmCall, rejectCall, goToContact };
   },
 };
 </script>
