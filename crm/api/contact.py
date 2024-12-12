@@ -52,7 +52,7 @@ def get_scheduled_calls():
                   - full_name: Full name of the contact.
                   - email: Email address of the contact.
                   - mobile_no: Mobile number of the contact.
-                  - custom_first_date: Status of the call (e.g., "Primo Contatto", "Secondo Contatto", "Terzo Contatto").
+                  - status: Status of the call (e.g., "Primo Contatto", "Secondo Contatto", "Terzo Contatto").
     """
     contacts = frappe.get_all(
         "Contact",
@@ -76,7 +76,8 @@ def get_scheduled_calls():
                 "CRM Call Log",
                 filters={
                     "reference_doctype": "Contact",
-                    "reference_docname": contact.name,  # Filter by contact name
+                    "reference_docname": contact.name,
+                    "creation": ("between", f"{getdate(nowdate())} 00:00:00", f"{getdate(nowdate())} 23:59:59"), 
                 },
             )
             if not existing_call_logs:
@@ -92,24 +93,6 @@ def get_scheduled_calls():
                         else "Terzo Contatto"
                     ),
                 })
-            else:
-                # Check if a call log exists for today for this contact
-                today_call_log = any(
-                    call_log.creation == getdate(nowdate()) for call_log in existing_call_logs
-                )
-                if not today_call_log:
-                    scheduled_calls.append({
-                        "full_name": contact.name,
-                        "email": contact.email_id,
-                        "mobile_no": contact.mobile_no,
-                        "status": (
-                            "Primo Contatto"
-                            if contact.custom_creation_date == getdate(nowdate())
-                            else "Secondo Contatto"
-                            if contact.custom_first_date == getdate(nowdate())
-                            else "Terzo Contatto"
-                        ),
-                    })
     return scheduled_calls
 @frappe.whitelist()
 def mark_call_status(contact, status):
