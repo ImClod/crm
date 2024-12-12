@@ -114,17 +114,17 @@ def mark_call_status(mobile_no, name,mail, status):
         # Genera un ID univoco
         import uuid
         unique_id = str(uuid.uuid4())[:12]  # Usa UUID per generare ID univoco
-
+        complete = f"{mobile_no} - {mail}" if mobile_no and mail else mobile_no or mail
         call_log.update({
             'id': unique_id,  # Aggiungi ID univoco
             'caller': frappe.session.user,
-            "to": mobile_no if mobile_no else mail,  # Utilizzare mobile_no come destinatario
+            "to":  complete,  # Utilizzare mobile_no come destinatario
             'type': 'Outgoing',
             'status': status,
             'start_time': frappe.utils.now(),
             'end_time': frappe.utils.now(),
             'reference_doctype': 'Contact',
-            'reference_docname': name
+            'reference_docname': name,
         })
         call_log.insert(ignore_permissions=True)
 
