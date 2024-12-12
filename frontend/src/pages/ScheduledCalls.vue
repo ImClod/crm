@@ -69,6 +69,7 @@ export default {
         await call('crm.api.contact.mark_call_status', {
           mobile_no: contact.mobile_no,
           name : contact.full_name,
+          mail : contact.email,
           status: status,
         });
         // Aggiorna la lista delle chiamate dopo l'aggiornamento dello stato

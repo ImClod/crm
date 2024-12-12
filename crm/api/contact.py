@@ -95,7 +95,7 @@ def get_scheduled_calls():
                 })
     return scheduled_calls
 @frappe.whitelist()
-def mark_call_status(mobile_no, name, status):
+def mark_call_status(mobile_no, name,mail, status):
     """
     Log call status and create call log
 
@@ -118,7 +118,7 @@ def mark_call_status(mobile_no, name, status):
         call_log.update({
             'id': unique_id,  # Aggiungi ID univoco
             'caller': frappe.session.user,
-            "to": mobile_no,  # Utilizzare mobile_no come destinatario
+            "to": mobile_no if mobile_no else mail,  # Utilizzare mobile_no come destinatario
             'type': 'Outgoing',
             'status': status,
             'start_time': frappe.utils.now(),
