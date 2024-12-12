@@ -76,7 +76,7 @@ def get_scheduled_calls():
                 "CRM Call Log",
                 filters={
                     "reference_doctype": "Contact",
-                    "reference_name": contact.name,  # Filter by contact name
+                    "reference_docname": contact.name,  # Filter by contact name
                 },
             )
             if not existing_call_logs:
