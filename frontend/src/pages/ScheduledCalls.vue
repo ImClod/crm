@@ -41,9 +41,9 @@
 </template>
 
 <script>
-import { createResource } from 'frappe-ui';
+import { createResource, call } from 'frappe-ui';
 import { computed } from 'vue';
-import { call } from '@frappe/core/utils/common';
+
 
 export default {
   setup() {
