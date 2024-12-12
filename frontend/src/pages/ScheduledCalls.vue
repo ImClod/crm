@@ -72,7 +72,7 @@ export default {
         });
 
         // Aggiorna la lista delle chiamate dopo l'aggiornamento dello stato
-        resource.refresh();
+        resource.reload();
 
         console.log('Stato chiamata aggiornato con successo.');
       } catch (error) {
@@ -84,7 +84,7 @@ export default {
 
     const confirmCall = async (row) => {
       console.log('Conferma chiamata per:', row.full_name);
-      await markCallStatus(row, 'Confirmed');
+      await markCallStatus(row, 'Completed');
     };
 
     const rejectCall = async (row) => {
