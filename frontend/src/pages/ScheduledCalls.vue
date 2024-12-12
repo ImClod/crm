@@ -20,14 +20,14 @@
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
-          <tr v-for="row in rows" :key="row.name" @click="goToContact(row)"> 
+          <tr v-for="row in rows" :key="row.name" @click="goToContact(row)">
             <td class="px-6 py-4 whitespace-nowrap cursor-pointer">{{ row.full_name }}</td>
             <td class="px-6 py-4 whitespace-nowrap">{{ row.email }}</td>
             <td class="px-6 py-4 whitespace-nowrap">{{ row.mobile_no }}</td>
             <td class="px-6 py-4 whitespace-nowrap">{{ row.status }}</td>
             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-              <button @click.prevent="confirmCall(row)" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Conferma</button>
-              <button @click.prevent="rejectCall(row)" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded ml-4">Rifiuta</button>
+              <button @click.stop="confirmCall(row)" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Conferma</button>
+              <button @click.stop="rejectCall(row)" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded ml-4">Rifiuta</button>
             </td>
           </tr>
         </tbody>
@@ -61,7 +61,7 @@ export default {
 
     const goToContact = (row) => {
       // Redireziona alla scheda del contatto
-      window.location.href = `/app/contact/${row.name}`; 
+      window.location.href = `/app/contact/${row.full_name}`; 
     };
 
     const markCallStatus = async (contact, status) => {
