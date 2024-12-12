@@ -108,13 +108,14 @@ def mark_call_status(contact, status):
         call_log.update({
             'id': unique_id,  # Aggiungi ID univoco
             'caller': frappe.session.user,
-            'to': contact,
+            'receiver': contact.full_name,
+			"to": contact.mobile_no,
             'type': 'Outgoing',
             'status': status,
             'start_time': frappe.utils.now(),
             'end_time': frappe.utils.now(),
             'reference_doctype': 'Contact',
-            'reference_docname': contact
+            'reference_docname': contact.full_name
         })
         call_log.insert(ignore_permissions=True)
         
