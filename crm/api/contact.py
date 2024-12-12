@@ -43,45 +43,74 @@ def update_deals_email_mobile_no(doc):
 
 @frappe.whitelist()
 def get_scheduled_calls():
-	contacts = frappe.get_all(
-			"Contact",
-			
-			fields=[
-				"name",
-				"email_id",
-				"mobile_no",
-				"custom_creation_date",
-				"custom_first_date", 
-				"custom_second_date",
-			],
-		)
-	scheduled_calls = []
-	for contact in contacts:
-		if (contact.custom_creation_date == getdate(nowdate()) or contact.custom_first_date == getdate(nowdate()) or contact.custom_second_date == getdate(nowdate())):
-			print(f'{contact.name}')
-			existing_call_logs = frappe.get_all(
-				"CRM Call Log",
-				filters={
-					"reference_doctype": "Contact",
-				},
-			)
-			if not existing_call_logs:
-				scheduled_calls.append({
-					"full_name": contact.get("name"),
-					"email": contact.get("email_id"),
-					"mobile_no": contact.get("mobile_no"),
-					"custom_first_date":( (contact.custom_creation_date  == getdate(nowdate()) and "Primo Contatto") or (contact.custom_first_date  == getdate(nowdate()) and "Secondo Contatto") or (contact.custom_second_date  == getdate(nowdate()) and "Terzo Contatto"))
-				})
-			else:
-				for call in existing_call_logs:
-					if call.creation != getdate(nowdate()) and call.to != contact.name:
-						scheduled_calls.append({
-						"full_name": contact.get("name"),
-						"email": contact.get("email_id"),
-						"mobile_no": contact.get("mobile_no"),
-						"custom_first_date":( (contact.custom_creation_date  == getdate(nowdate()) and "Primo Contatto") or (contact.custom_first_date  == getdate(nowdate()) and "Secondo Contatto") or (contact.custom_second_date  == getdate(nowdate()) and "Terzo Contatto"))
-					})
-	return scheduled_calls
+    """
+    Retrieves a list of scheduled calls for today.
+
+    Returns:
+        list: A list of dictionaries, each representing a scheduled call.
+              Each dictionary contains the following keys:
+                  - full_name: Full name of the contact.
+                  - email: Email address of the contact.
+                  - mobile_no: Mobile number of the contact.
+                  - custom_first_date: Status of the call (e.g., "Primo Contatto", "Secondo Contatto", "Terzo Contatto").
+    """
+    contacts = frappe.get_all(
+        "Contact",
+        fields=[
+            "name",
+            "email_id",
+            "mobile_no",
+            "custom_creation_date",
+            "custom_first_date",
+            "custom_second_date",
+        ],
+    )
+    scheduled_calls = []
+    for contact in contacts:
+        if (
+            contact.custom_creation_date == getdate(nowdate())
+            or contact.custom_first_date == getdate(nowdate())
+            or contact.custom_second_date == getdate(nowdate())
+        ):
+            existing_call_logs = frappe.get_all(
+                "CRM Call Log",
+                filters={
+                    "reference_doctype": "Contact",
+                    "reference_name": contact.name,  # Filter by contact name
+                },
+            )
+            if not existing_call_logs:
+                scheduled_calls.append({
+                    "full_name": contact.name,
+                    "email": contact.email_id,
+                    "mobile_no": contact.mobile_no,
+                    "status": (
+                        "Primo Contatto"
+                        if contact.custom_creation_date == getdate(nowdate())
+                        else "Secondo Contatto"
+                        if contact.custom_first_date == getdate(nowdate())
+                        else "Terzo Contatto"
+                    ),
+                })
+            else:
+                # Check if a call log exists for today for this contact
+                today_call_log = any(
+                    call_log.creation == getdate(nowdate()) for call_log in existing_call_logs
+                )
+                if not today_call_log:
+                    scheduled_calls.append({
+                        "full_name": contact.name,
+                        "email": contact.email_id,
+                        "mobile_no": contact.mobile_no,
+                        "status": (
+                            "Primo Contatto"
+                            if contact.custom_creation_date == getdate(nowdate())
+                            else "Secondo Contatto"
+                            if contact.custom_first_date == getdate(nowdate())
+                            else "Terzo Contatto"
+                        ),
+                    })
+    return scheduled_calls
 @frappe.whitelist()
 def mark_call_status(contact, status):
     """Log call status and create call log"""
