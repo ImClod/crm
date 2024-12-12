@@ -51,6 +51,7 @@ export default {
       url: 'crm.api.contact.get_scheduled_calls',
       auto: true,
     });
+    console.log(resource.data)
     const rows = computed(() => {
       if (!resource.data) return [];
       return resource.data.map(item => ({
@@ -72,7 +73,6 @@ export default {
         resource.data = null;
         // Aggiorna la lista delle chiamate dopo l'aggiornamento dello stato
         resource.reload();
-        console.log(resource.data)
         console.log('Stato chiamata aggiornato con successo.');
       } catch (error) {
         console.error('Errore durante l\'aggiornamento dello stato della chiamata:', error);
