@@ -24,7 +24,7 @@
             <td class="px-6 py-4 whitespace-nowrap cursor-pointer">{{ row.full_name }}</td>
             <td class="px-6 py-4 whitespace-nowrap">{{ row.email }}</td>
             <td class="px-6 py-4 whitespace-nowrap">{{ row.mobile_no }}</td>
-            <td class="px-6 py-4 whitespace-nowrap">{{ row.status }}</td>
+            <td class="px-6 py-4 whitespace-nowrap">{{ row.custom_first_date }}</td>
             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
               <button @click.stop="confirmCall(row)" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Conferma</button>
               <button @click.stop="rejectCall(row)" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded ml-4">Rifiuta</button>
@@ -51,7 +51,6 @@ export default {
       url: 'crm.api.contact.get_scheduled_calls',
       auto: true,
     });
-
     const rows = computed(() => {
       if (!resource.data) return [];
       return resource.data.map(item => ({
@@ -70,10 +69,10 @@ export default {
           contact: contact.full_name,
           status: status,
         });
-
+        resource.data = null;
         // Aggiorna la lista delle chiamate dopo l'aggiornamento dello stato
         resource.reload();
-
+        console.log(resource.data)
         console.log('Stato chiamata aggiornato con successo.');
       } catch (error) {
         console.error('Errore durante l\'aggiornamento dello stato della chiamata:', error);
